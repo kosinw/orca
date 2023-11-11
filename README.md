@@ -1,6 +1,6 @@
 # Orca
 
-Orca is a RISC-V based microcomputer designed to execute LISP. Hardware includes a synthesizable softcore and peripheral devices written in System Verilog. Softarw includes a bytecode compiler and a virtual machine for the Scheme programming language.
+Orca is a RISC-V based microcomputer featuring a security coprocessor for AES hardware acceleration. Hardware includes a synthesizable softcore, a VGA character generator, a keyboard, a UART programmer and peripheral devices written in System Verilog. Softarwe includes benchmark and proof-of-concept programs.
 
 Currently there is an [initial report](./docs/block_diagram.pdf) and an [initial presentation](./docs/initial_presentation.pdf). Additional documentation will be added in the future.
 
