@@ -21,7 +21,7 @@ font:
 
 .PHONY: text
 text:
-	util/text_rom_gen.py data/text.mem
+	util/text_gen.py data/text.mem
 
 # fix the dump file thing
 .PHONY: video_tb
