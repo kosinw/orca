@@ -2,3 +2,4 @@ remote/
 venv/
 obj/
 .DS_Store
+vivado.log

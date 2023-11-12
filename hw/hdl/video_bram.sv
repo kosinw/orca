@@ -41,18 +41,18 @@ module video_bram#(
         .RAM_WIDTH(16),
         .RAM_DEPTH(160*45),
         .INIT_FILE(TEXT_INIT_FILE)
-    ) character_bram (
-        .addra(),
-        .clka(),
+    ) bram (
+        .addra(13'b0),
+        .clka(clk_hdmi_in), // change me
         .wea(1'b0),
-        .dina(8'b0),
+        .dina(16'b0),
         .ena(1'b0),
         .regcea(1'b0),
         .rsta(1'b0),
         .douta(),
 
         .addrb(frame_buffer_addr),
-        .dinb(8'b0),
+        .dinb(16'b0),
         .clkb(clk_hdmi_in),
         .web(1'b0),
         .enb(1'b1),

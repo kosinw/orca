@@ -19,6 +19,7 @@ module top_level(
     // turn off bright LEDs
     assign rgb1 = 0;
     assign rgb0 = 0;
+    assign led = sw;
 
     // have btn[0] control resetting system
     logic sys_rst;
@@ -26,13 +27,15 @@ module top_level(
 
     // clock domains
     logic clk_74mhz, clk_371mhz;    // 74.25 MHz hdmi clock and 371.25 MHz
-    logic locked_u;                 // locked signal (unused)
+    logic locked_unused;                 // locked signal (unused)
 
     // tmds
     logic [9:0] tmds_10b [0:2];     // output of TMDS encoder
     logic tmds_signal [2:0];        // output of TMDS serializer
 
     // video controller
+    logic video_vsync, video_hsync, video_active_draw, video_new_frame;
+    logic [7:0] video_red, video_green, video_blue;
 
     ////////////////////////////////////////////////////////////
     // BLOCKS
@@ -42,8 +45,20 @@ module top_level(
         .clk_pixel(clk_74mhz),
         .clk_tmds(clk_371mhz),
         .reset(0),
-        .locked(locked_u),
+        .locked(locked_unused),
         .clk_ref(clk_100mhz)
+    );
+
+    video_controller mvc (
+        .clk_hdmi_in(clk_74mhz),
+        .rst_in(sys_rst),
+        .vsync_out(video_vsync),
+        .hsync_out(video_hsync),
+        .active_draw_out(video_active_draw),
+        .new_frame_out(video_new_frame),
+        .red_out(video_red),
+        .green_out(video_green),
+        .blue_out(video_blue)
     );
 
     tmds_encoder tmds_encoder_red(
@@ -74,7 +89,7 @@ module top_level(
     );
 
     tmds_serializer tmds_serializer_red(
-        .clk_in(clk_74mhz),
+        .clk_pixel_in(clk_74mhz),
         .clk_5x_in(clk_371mhz),
         .rst_in(sys_rst),
         .tmds_in(tmds_10b[2]),
@@ -82,7 +97,7 @@ module top_level(
     );
 
     tmds_serializer tmds_serializer_green(
-        .clk_in(clk_74mhz),
+        .clk_pixel_in(clk_74mhz),
         .clk_5x_in(clk_371mhz),
         .rst_in(sys_rst),
         .tmds_in(tmds_10b[1]),
@@ -90,7 +105,7 @@ module top_level(
     );
 
     tmds_serializer tmds_serializer_blue(
-        .clk_in(clk_74mhz),
+        .clk_pixel_in(clk_74mhz),
         .clk_5x_in(clk_371mhz),
         .rst_in(sys_rst),
         .tmds_in(tmds_10b[0]),
@@ -103,3 +118,5 @@ module top_level(
     OBUFDS OBUFDS_clock(.I(clk_74mhz), .O(hdmi_clk_p), .OB(hdmi_clk_n));
 
 endmodule
+
+`default_nettype wire
