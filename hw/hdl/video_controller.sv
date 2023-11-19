@@ -7,11 +7,7 @@
 `define FPATH(X) `"data/X`"
 `endif  /* ! SYNTHESIS */
 
-module video_controller#(
-    parameter TEXT_INIT_FILE = `FPATH(text.mem),
-    parameter FONT_INIT_FILE = `FPATH(font.mem)
-)
-(
+module video_controller(
     input wire clk_hdmi_in,
     input wire rst_in,
     output logic vsync_out,
@@ -67,7 +63,8 @@ module video_controller#(
     logic [7:0] mvb_code_point, mvb_attribute;
 
     video_bram#(
-        .TEXT_INIT_FILE(TEXT_INIT_FILE)
+        .TEXT_INIT_FILE(`FPATH(text_codepoint.mem)),
+        .ATTR_INIT_FILE(`FPATH(text_attribute.mem))
     ) mvb (
         .clk_hdmi_in(clk_hdmi_in),
         .rst_in(rst_in),
@@ -85,7 +82,7 @@ module video_controller#(
     logic [7:0] mfb_attribute;
 
     font_brom#(
-        .FONT_INIT_FILE(FONT_INIT_FILE)
+        .FONT_INIT_FILE(`FPATH(font.mem))
     ) mfb (
         .clk_hdmi_in(clk_hdmi_in),
         .rst_in(rst_in),

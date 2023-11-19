@@ -2,25 +2,32 @@
 import sys
 import random
 
-screen = [["0000" for _ in range(160)] for _ in range(45)]
+codepoints = [["00" for _ in range(160)] for _ in range(45)]
+attributes = [["00" for _ in range(160)] for _ in range(45)]
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("usage: util/text_rom_gen.py [output_filename]")
+    if len(sys.argv) < 3:
+        print("usage: util/text_gen.py [codepoint_file] [attribute_file]")
         exit()
 
-    output_filename = sys.argv[1]
+    codepoint_file = sys.argv[1]
+    attribute_file = sys.argv[2]
 
-    for r in range(len(screen)):
-        for c in range(len(screen[0])):
+    for r in range(45):
+        for c in range(160):
             character = bytes([((r*160)+c)%256]).hex()
-            color = "4f"
-            screen[r][c] = f"{character}{color}"
+            attributes[r][c] = "4f"
+            codepoints[r][c] = f"{character}"
 
 
-    with open(output_filename, 'w') as f:
-        for r in range(len(screen)):
-            for c in range(len(screen[0])):
-                f.write(f"{screen[r][c]}\n")
+    with open(codepoint_file, 'w') as f:
+        for r in range(len(codepoints)):
+            for c in range(len(codepoints[0])):
+                f.write(f"{codepoints[r][c]}\n")
+
+    with open(attribute_file, 'w') as f:
+        for r in range(len(attributes)):
+            for c in range(len(attributes[0])):
+                f.write(f"{attributes[r][c]}\n")
 
 
