@@ -23,7 +23,6 @@ font:
 text:
 	util/text_gen.py data/text_codepoint.mem data/text_attribute.mem
 
-# fix the dump file thing
 .PHONY: video_tb
 video_tb:
 	iverilog -g2012 -o \
@@ -39,6 +38,17 @@ video_tb:
 		hdl/xilinx_true_dual_port_read_first_2_clock_ram.v
 	vvp vcd/video_controller.out
 	open vcd/video_controller.vcd
+
+.PHONY: ps2_rx_tb
+ps2_rx_tb:
+	iverilog -g2012 -o 			\
+		vcd/ps2_rx.out			\
+		sim/ps2_rx_tb.sv		\
+		hdl/ps2_rx.sv			\
+		hdl/synchronizer.sv		\
+		hdl/debouncer.sv
+	vvp vcd/ps2_rx.out
+	open vcd/ps2_rx.vcd
 
 .PHONY: clean
 clean:
