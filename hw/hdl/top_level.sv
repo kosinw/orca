@@ -2,15 +2,20 @@
 `default_nettype none
 
 module top_level(
-    input wire clk_100mhz,
+    input wire clk_board,
     input wire [15:0] sw,
     input wire [3:0] btn,
+    input wire [2:0] pmodb,
     output logic [15:0] led,
     output logic [2:0] hdmi_tx_p,           // hdmi output signals (blue, green, red)
     output logic [2:0] hdmi_tx_n,           // hdmi output signals (negatives)
     output logic hdmi_clk_p, hdmi_clk_n,    // differential hdmi clock
     output logic [2:0] rgb0,
-    output logic [2:0] rgb1
+    output logic [2:0] rgb1,
+    output logic [3:0] ss0_an,              // anode control for upper 4 digits
+    output logic [3:0] ss1_an,              // anode control for lower 4 digits
+    output logic [6:0] ss0_c,               // cathode control for upper 4 digits
+    output logic [6:0] ss1_c                // cathode control for upper 4 digits
 );
     ////////////////////////////////////////////////////////////
     // DECLARATIONS
@@ -26,7 +31,8 @@ module top_level(
     assign sys_rst = btn[0];
 
     // clock domains
-    logic clk_74mhz, clk_371mhz;    // 74.25 MHz hdmi clock and 371.25 MHz
+    logic clk_74mhz, clk_371mhz;         // 74.25 MHz hdmi clock and 371.25 MHz
+    logic clk_100mhz;
     logic locked_unused;                 // locked signal (unused)
 
     // tmds
@@ -41,6 +47,11 @@ module top_level(
     // BLOCKS
     ////////////////////////////////////////////////////////////
 
+    BUFG mbf (
+        .I(clk_board),
+        .O(clk_100mhz)
+    );
+
     hdmi_clk_wiz_720p hdmicw (
         .clk_pixel(clk_74mhz),
         .clk_tmds(clk_371mhz),
@@ -48,6 +59,44 @@ module top_level(
         .locked(locked_unused),
         .clk_ref(clk_100mhz)
     );
+
+    // TODO(kosinw): Remove me, just for testing keyboard logic
+    logic [7:0] mkb_scancode;
+    logic mkb_valid;
+
+    ps2_rx mkb (
+        .clk_in(clk_100mhz),
+        .rst_in(sys_rst),
+        .ps2_clk_in(pmodb[2]),
+        .ps2_data_in(pmodb[0]),
+        .valid_out(mkb_valid),
+        .error_out(),
+        .scancode_out(mkb_scancode)
+    );
+
+    logic [31:0] scancode_buffer;
+    logic [6:0] ss_c;
+
+    always_ff @(posedge clk_100mhz) begin
+        if (sys_rst) begin
+            scancode_buffer <= 32'h0;
+        end else begin
+            if (mkb_valid) begin
+                scancode_buffer <= {scancode_buffer[23:0],mkb_scancode};
+            end
+        end
+    end
+
+    seven_segment_controller mssc (
+        .clk_in(clk_100mhz),
+        .rst_in(sys_rst),
+        .val_in(scancode_buffer),
+        .cat_out(ss_c),
+        .an_out({ss0_an,ss1_an})
+    );
+
+    assign ss0_c = ss_c;
+    assign ss1_c = ss_c;
 
     video_controller mvc (
         .clk_hdmi_in(clk_74mhz),
@@ -61,7 +110,7 @@ module top_level(
         .blue_out(video_blue)
     );
 
-    tmds_encoder tmds_encoder_red(
+    tmds_encoder tmds_encoder_red (
         .clk_in(clk_74mhz),
         .rst_in(sys_rst),
         .data_in(video_red),
@@ -70,7 +119,7 @@ module top_level(
         .tmds_out(tmds_10b[2])
     );
 
-    tmds_encoder tmds_encoder_green(
+    tmds_encoder tmds_encoder_green (
         .clk_in(clk_74mhz),
         .rst_in(sys_rst),
         .data_in(video_green),
@@ -79,7 +128,7 @@ module top_level(
         .tmds_out(tmds_10b[1])
     );
 
-    tmds_encoder tmds_encoder_blue(
+    tmds_encoder tmds_encoder_blue (
         .clk_in(clk_74mhz),
         .rst_in(sys_rst),
         .data_in(video_blue),
@@ -88,7 +137,7 @@ module top_level(
         .tmds_out(tmds_10b[0])
     );
 
-    tmds_serializer tmds_serializer_red(
+    tmds_serializer tmds_serializer_red (
         .clk_pixel_in(clk_74mhz),
         .clk_5x_in(clk_371mhz),
         .rst_in(sys_rst),
@@ -96,7 +145,7 @@ module top_level(
         .tmds_out(tmds_signal[2])
     );
 
-    tmds_serializer tmds_serializer_green(
+    tmds_serializer tmds_serializer_green (
         .clk_pixel_in(clk_74mhz),
         .clk_5x_in(clk_371mhz),
         .rst_in(sys_rst),
@@ -104,7 +153,7 @@ module top_level(
         .tmds_out(tmds_signal[1])
     );
 
-    tmds_serializer tmds_serializer_blue(
+    tmds_serializer tmds_serializer_blue (
         .clk_pixel_in(clk_74mhz),
         .clk_5x_in(clk_371mhz),
         .rst_in(sys_rst),
