@@ -47,22 +47,22 @@ module top_level(
     // RISC-V CORE
     ////////////////////////////////////////////////////////////
 
-    logic [31:0] inst;
-    logic [31:0] ram_data_rd;
-    logic [13:0] pc;
-    logic [31:0] mem_addr, ram_data_wr;
-    logic mem_we;
+    // logic [31:0] inst;
+    // logic [31:0] ram_data_rd;
+    // logic [13:0] pc;
+    // logic [31:0] mem_addr, ram_data_wr;
+    // logic mem_we;
 
-    riscv_core riscv_core (
-        .clk_100mhz(clk_100mhz),
-        .rst_in(sys_rst),
-        .inst_in(inst),
-        .ram_data_in(ram_data_rd),
-        .pc_out(pc),
-        .mem_addr_out(mem_addr),
-        .ram_data_out(ram_data_wr),
-        .mem_we_out(mem_we),
-    );
+    // riscv_core riscv_core (
+    //     .clk_100mhz(clk_100mhz),
+    //     .rst_in(sys_rst),
+    //     .inst_in(inst),
+    //     .ram_data_in(ram_data_rd),
+    //     .pc_out(pc),
+    //     .mem_addr_out(mem_addr),
+    //     .ram_data_out(ram_data_wr),
+    //     .mem_we_out(mem_we),
+    // );
 
     ////////////////////////////////////////////////////////////
     // BRAM FOR PROGRAM
@@ -70,29 +70,29 @@ module top_level(
     // Program RAM: 32 * 32000 = 1024 kb = 128 KB
     ////////////////////////////////////////////////////////////
 
-    xilinx_true_dual_port_read_first_2_clock_ram #(
-        .RAM_WIDTH(32),
-        .RAM_DEPTH(16000 + 32000),
-        // .INIT_FILE(TEXT_INIT_FILE)
-    ) bram (
-        .addra(pc),
-        .clka(clk_100mhz),
-        .wea(1'b0),
-        .dina(16'b0),
-        .ena(1'b1),
-        .regcea(1'b1),
-        .rsta(rst_in),
-        .douta(inst),
+    // xilinx_true_dual_port_read_first_2_clock_ram #(
+    //     .RAM_WIDTH(32),
+    //     .RAM_DEPTH(16000 + 32000),
+    //     // .INIT_FILE(TEXT_INIT_FILE)
+    // ) bram (
+    //     .addra(pc),
+    //     .clka(clk_100mhz),
+    //     .wea(1'b0),
+    //     .dina(16'b0),
+    //     .ena(1'b1),
+    //     .regcea(1'b1),
+    //     .rsta(rst_in),
+    //     .douta(inst),
 
-        .addrb(mem_addr),
-        .dinb(ram_data_wr),
-        .clkb(clk_100mhz),
-        .web(mem_we),
-        .enb(1'b1),
-        .rstb(rst_in),
-        .regceb(1'b1),
-        .doutb()
-    );
+    //     .addrb(mem_addr),
+    //     .dinb(ram_data_wr),
+    //     .clkb(clk_100mhz),
+    //     .web(mem_we),
+    //     .enb(1'b1),
+    //     .rstb(rst_in),
+    //     .regceb(1'b1),
+    //     .doutb()
+    // );
 
     ////////////////////////////////////////////////////////////
     // BLOCKS
