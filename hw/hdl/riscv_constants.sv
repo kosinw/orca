@@ -57,10 +57,9 @@
 `define ALU_FUNC_SRA        4'd8
 `define ALU_FUNC_OR         4'd9
 `define ALU_FUNC_AND        4'd10
-`define ALU_FUNC_JAL        4'd11
-`define ALU_FUNC_JALR       4'd12
-`define ALU_FUNC_LUI        4'd13
-`define ALU_FUNC_BR         4'd14
+`define ALU_FUNC_JALR       4'd11
+`define ALU_FUNC_LUI        4'd12
+`define ALU_FUNC_BR         4'd13
 
 // br func
 `define BR_FUNC_NONE        3'd0

@@ -75,7 +75,7 @@ module riscv_decode(
                 op1_sel_out = `OP1_PC;
                 op2_sel_out = `OP2_IMM;
                 writeback_sel_out = `WRITEBACK_PC4;
-                alu_func_out = `ALU_FUNC_JAL;
+                alu_func_out = `ALU_FUNC_ADD;
                 write_enable_rf_out = `ON;
                 dmem_func_out = `MEM_FUNC_RD;
                 dmem_size_out = `MASK_NONE;

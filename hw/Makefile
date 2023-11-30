@@ -57,9 +57,18 @@ riscv_decode_tb:
 		sim/riscv_decode_tb.sv			\
 		hdl/riscv_constants.sv			\
 		hdl/riscv_decode.sv
-
 	vvp vcd/riscv_decode.out
 	open vcd/riscv_decode.vcd
+
+.PHONY: alu_tb
+alu_tb:
+	iverilog -g2012 -o 				\
+		vcd/riscv_alu.out			\
+		sim/riscv_alu_tb.sv			\
+		hdl/riscv_constants.sv		\
+		hdl/riscv_alu.sv
+	vvp vcd/riscv_alu.out
+	open vcd/riscv_alu.vcd
 
 .PHONY: clean
 clean:
