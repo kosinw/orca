@@ -4,6 +4,41 @@
 module riscv_decode_tb;
     logic [31:0] INSTRUCTIONS [34:0];
 
+    logic        clk_in;
+    logic [31:0] inst_in;
+    logic [4:0]  rs1_out;
+    logic [4:0]  rs2_out;
+    logic [4:0]  rd_out;
+    logic [31:0] imm_out;
+    logic [2:0]  br_func_out;
+    logic [1:0]  pc_sel_out;
+    logic        op1_sel_out;
+    logic        op2_sel_out;
+    logic [1:0]  writeback_sel_out;
+    logic [3:0]  alu_func_out;
+    logic        write_enable_rf_out;
+    logic        dmem_func_out;
+    logic [2:0]  dmem_size_out;
+    logic        dmem_enable_out;
+
+    riscv_decode uut(
+        .inst_in(inst_in),
+        .rs1_out(rs1_out),
+        .rs2_out(rs2_out),
+        .rd_out(rd_out),
+        .imm_out(imm_out),
+        .br_func_out(br_func_out),
+        .pc_sel_out(pc_sel_out),
+        .op1_sel_out(op1_sel_out),
+        .op2_sel_out(op2_sel_out),
+        .writeback_sel_out(writeback_sel_out),
+        .alu_func_out(alu_func_out),
+        .write_enable_rf_out(write_enable_rf_out),
+        .dmem_func_out(dmem_func_out),
+        .dmem_size_out(dmem_size_out),
+        .dmem_enable_out(dmem_enable_out)
+    );
+
     initial begin
         INSTRUCTIONS[ 0] = 32'h000cb197;     // auipc x3, 203
         INSTRUCTIONS[ 1] = 32'h00013237;     // lui x4, 19
@@ -34,9 +69,9 @@ module riscv_decode_tb;
         INSTRUCTIONS[21] = 32'h0378c493;     // xori x9, x17, 55
         INSTRUCTIONS[22] = 32'h0378e493;     // ori x9, x17, 55
         INSTRUCTIONS[23] = 32'h0378f493;     // andi x9, x17, 55
-        INSTRUCTIONS[24] = 32'h03789493;     // slli x9, x17, 55
-        INSTRUCTIONS[25] = 32'h0378d493;     // srli x9, x17, 55
-        INSTRUCTIONS[26] = 32'h4378d493;     // srai x9, x17, 55
+        INSTRUCTIONS[24] = 32'h00889493;     // slli x9, x17, 8
+        INSTRUCTIONS[25] = 32'h0088d493;     // srli x9, x17, 8
+        INSTRUCTIONS[26] = 32'h4088d493;     // srai x9, x17, 8
 
         INSTRUCTIONS[27] = 32'h00838333;     // add x6, x7, x8
         INSTRUCTIONS[28] = 32'h40838333;     // sub x6, x7, x8
@@ -63,10 +98,10 @@ module riscv_decode_tb;
         clk_in = 0;
         #5;
 
-        // for (integer i = 0; i < 34; i = i + 1) begin
-        //     #10;
-        //     inst_in = INSTRUCTIONS[i];
-        // end
+        for (integer i = 0; i <= 34; i = i + 1) begin
+            inst_in = INSTRUCTIONS[i];
+            #10;
+        end
 
         $display("Finishing simulation...");
         $finish;
