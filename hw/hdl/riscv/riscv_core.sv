@@ -2,23 +2,18 @@
 `default_nettype none
 `include "riscv_types.sv"
 
-module riscv_core
-(
+module riscv_core(
     input wire              clk_in,
     input wire              rst_in,
-
     input wire              hlt_in,
     input wire              step_in,
-
-    input  wire   [31:0]    inst_data_in,
-    output logic  [31:0]    inst_addr_out,
-
-    output MemoryRequest    data_mem_in,
-    input  MemoryResponse   data_mem_out
+    input  wire   [31:0]    inst_mem_in,
+    output logic  [31:0]    inst_mem_out,
+    output MemoryRequest    data_mem_out,
+    input  MemoryResponse   data_mem_in
 );
     InstructionFetchState       ifr, ifn; // instruction fetch register, next
     InstructionDecodeState      idr, idn; // instruction decode register, next
-    ExecuteState                exr, exn; // execute register, next
 
     logic halt;
     assign halt = hlt_in || (hlt_in && !step_in);
@@ -46,7 +41,7 @@ module riscv_core
         end
     end
 
-    assign inst_addr_out = ifr.pc;
+    assign inst_mem_out = ifr.pc;
 
 
     ///////////////////////////////////////////////////////////
@@ -55,11 +50,13 @@ module riscv_core
     //
     ///////////////////////////////////////////////////////////
 
+    DecodeOut   id_dec_out;
+
     always_comb begin
         idn = idr;
 
         if (!halt) begin
-            idn.instr = inst_data_in;
+            idn.instr = inst_mem_in;
             idn.pc = ifr.pc;
         end
     end
