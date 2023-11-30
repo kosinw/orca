@@ -50,6 +50,18 @@ ps2_rx_tb:
 	vvp vcd/ps2_rx.out
 	open vcd/ps2_rx.vcd
 
+.PHONY: riscv_decode_tb
+riscv_decode_tb:
+	iverilog -g2012 -o 					\
+		vcd/riscv_decode.out			\
+		sim/riscv_decode_tb.sv			\
+		hdl/riscv/riscv_types.sv		\
+		hdl/riscv/riscv_instructions.sv	\
+		hdl/riscv/riscv_decode.sv
+
+	vvp vcd/riscv_decode.out
+	open vcd/riscv_decode.vcd
+
 .PHONY: clean
 clean:
 	rm -rf obj/*
