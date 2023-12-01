@@ -60,6 +60,19 @@ decode_tb:
 	vvp vcd/riscv_decode.out
 	open vcd/riscv_decode.vcd
 
+.PHONY: core_tb
+core_tb:
+	iverilog -g2012 -o 					\
+		vcd/riscv_core.out				\
+		sim/riscv_core_tb.sv			\
+		hdl/riscv_constants.sv			\
+		hdl/riscv_alu.sv				\
+		hdl/riscv_decode.sv				\
+		hdl/riscv_regfile.sv			\
+		hdl/riscv_core.sv
+	vvp vcd/riscv_core.out
+	open vcd/riscv_core.vcd
+
 .PHONY: alu_tb
 alu_tb:
 	iverilog -g2012 -o 				\
