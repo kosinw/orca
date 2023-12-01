@@ -17,9 +17,9 @@ module riscv_decode_tb;
     logic [1:0]  writeback_sel_out;
     logic [3:0]  alu_func_out;
     logic        write_enable_rf_out;
-    logic        dmem_func_out;
     logic [2:0]  dmem_size_out;
-    logic        dmem_enable_out;
+    logic        dmem_read_enable_out;
+    logic        dmem_write_enable_out;
 
     riscv_decode uut(
         .inst_in(inst_in),
@@ -34,9 +34,9 @@ module riscv_decode_tb;
         .writeback_sel_out(writeback_sel_out),
         .alu_func_out(alu_func_out),
         .write_enable_rf_out(write_enable_rf_out),
-        .dmem_func_out(dmem_func_out),
         .dmem_size_out(dmem_size_out),
-        .dmem_enable_out(dmem_enable_out)
+        .dmem_read_enable_out(dmem_read_enable_out),
+        .dmem_write_enable_out(dmem_write_enable_out)
     );
 
     initial begin

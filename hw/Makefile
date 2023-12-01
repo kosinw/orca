@@ -50,8 +50,8 @@ ps2_rx_tb:
 	vvp vcd/ps2_rx.out
 	open vcd/ps2_rx.vcd
 
-.PHONY: riscv_decode_tb
-riscv_decode_tb:
+.PHONY: decode_tb
+decode_tb:
 	iverilog -g2012 -o 					\
 		vcd/riscv_decode.out			\
 		sim/riscv_decode_tb.sv			\

@@ -89,10 +89,6 @@
 `define WRITEBACK_DATA      2'd2
 `define WRITEBACK_X         2'd3
 
-// memory function
-`define MEM_FUNC_RD         1'd0
-`define MEM_FUNC_WR         1'd1
-
 // mask size
 `define MASK_NONE           3'd0
 `define MASK_B              3'd1

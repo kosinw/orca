@@ -16,9 +16,9 @@ module riscv_decode(
     output logic [1:0]  writeback_sel_out,
     output logic [3:0]  alu_func_out,
     output logic        write_enable_rf_out,
-    output logic        dmem_func_out,
     output logic [2:0]  dmem_size_out,
-    output logic        dmem_enable_out
+    output logic        dmem_read_enable_out,
+    output logic        dmem_write_enable_out
 );
     logic [6:0]  opcode;
     logic [2:0]  funct3;
@@ -51,9 +51,9 @@ module riscv_decode(
                 writeback_sel_out = `WRITEBACK_ALU;
                 alu_func_out = `ALU_FUNC_ADD;
                 write_enable_rf_out = `ON;
-                dmem_func_out = `MEM_FUNC_RD;
                 dmem_size_out = `MASK_NONE;
-                dmem_enable_out = `OFF;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `OFF;
             end
             `OPCODE_LUI: begin
                 imm_out = immU;
@@ -64,9 +64,9 @@ module riscv_decode(
                 writeback_sel_out = `WRITEBACK_ALU;
                 alu_func_out = `ALU_FUNC_LUI;
                 write_enable_rf_out = `ON;
-                dmem_func_out = `MEM_FUNC_RD;
                 dmem_size_out = `MASK_NONE;
-                dmem_enable_out = `OFF;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `OFF;
             end
             `OPCODE_JAL: begin
                 imm_out = immJ;
@@ -77,9 +77,9 @@ module riscv_decode(
                 writeback_sel_out = `WRITEBACK_PC4;
                 alu_func_out = `ALU_FUNC_ADD;
                 write_enable_rf_out = `ON;
-                dmem_func_out = `MEM_FUNC_RD;
                 dmem_size_out = `MASK_NONE;
-                dmem_enable_out = `OFF;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `OFF;
             end
             `OPCODE_JALR: begin
                 imm_out = immI;
@@ -90,9 +90,9 @@ module riscv_decode(
                 writeback_sel_out = `WRITEBACK_PC4;
                 alu_func_out = `ALU_FUNC_JALR;
                 write_enable_rf_out = `ON;
-                dmem_func_out = `MEM_FUNC_RD;
                 dmem_size_out = `MASK_NONE;
-                dmem_enable_out = `OFF;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `OFF;
             end
             `OPCODE_BR: begin
                 imm_out = immB;
@@ -110,9 +110,9 @@ module riscv_decode(
                 writeback_sel_out = `WRITEBACK_X;
                 alu_func_out = `ALU_FUNC_BR;
                 write_enable_rf_out = `OFF;
-                dmem_func_out = `MEM_FUNC_RD;
                 dmem_size_out = `MASK_NONE;
-                dmem_enable_out = `OFF;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `OFF;
             end
             `OPCODE_LOAD: begin
                 imm_out = immI;
@@ -123,7 +123,6 @@ module riscv_decode(
                 writeback_sel_out = `WRITEBACK_DATA;
                 alu_func_out = `ALU_FUNC_ADD;
                 write_enable_rf_out = `ON;
-                dmem_func_out = `MEM_FUNC_RD;
                 case (funct3)
                     `FUNCT3_MEM_B:   dmem_size_out = `MASK_B;
                     `FUNCT3_MEM_H:   dmem_size_out = `MASK_H;
@@ -132,7 +131,8 @@ module riscv_decode(
                     `FUNCT3_MEM_HU:  dmem_size_out = `MASK_HU;
                     default:         dmem_size_out = `MASK_NONE;
                 endcase
-                dmem_enable_out = `ON;
+                dmem_read_enable_out = `ON;
+                dmem_write_enable_out = `OFF;
             end
             `OPCODE_STORE: begin
                 imm_out = immS;
@@ -143,7 +143,6 @@ module riscv_decode(
                 writeback_sel_out = `WRITEBACK_X;
                 alu_func_out = `ALU_FUNC_ADD;
                 write_enable_rf_out = `OFF;
-                dmem_func_out = `MEM_FUNC_WR;
                 case (funct3)
                     `FUNCT3_MEM_B:   dmem_size_out = `MASK_B;
                     `FUNCT3_MEM_H:   dmem_size_out = `MASK_H;
@@ -152,7 +151,8 @@ module riscv_decode(
                     `FUNCT3_MEM_HU:  dmem_size_out = `MASK_HU;
                     default:         dmem_size_out = `MASK_NONE;
                 endcase
-                dmem_enable_out = `ON;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `ON;
             end
             `OPCODE_IMM: begin
                 imm_out = immI;
@@ -175,9 +175,9 @@ module riscv_decode(
                     default:             alu_func_out = `ALU_FUNC_NONE;
                 endcase
                 write_enable_rf_out = `ON;
-                dmem_func_out = `MEM_FUNC_RD;
                 dmem_size_out = `MASK_NONE;
-                dmem_enable_out = `OFF;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `OFF;
             end
             `OPCODE_REG: begin
                 imm_out = `ZERO;
@@ -202,9 +202,9 @@ module riscv_decode(
                     default:             alu_func_out = `ALU_FUNC_NONE;
                 endcase
                 write_enable_rf_out = `ON;
-                dmem_func_out = `MEM_FUNC_RD;
                 dmem_size_out = `MASK_NONE;
-                dmem_enable_out = `OFF;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `OFF;
             end
         endcase
     end
