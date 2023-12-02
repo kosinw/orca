@@ -19,15 +19,16 @@ module riscv_memory_iface(
 );
     logic [2:0] cpu_size_read;
     logic cpu_enable_read;
+    logic [31:0] cpu_read_addr;
 
     pipeline#(
         .PIPELINE_STAGES(2),
-        .PIPELINE_WIDTH(4)
+        .PIPELINE_WIDTH(36)
     ) read_ctrl_pipeline (
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .signal_in({cpu_size_in,cpu_read_enable_in}),
-        .signal_out({cpu_size_read,cpu_enable_read})
+        .signal_in({cpu_addr_in,cpu_size_in,cpu_read_enable_in}),
+        .signal_out({cpu_read_addr,cpu_size_read,cpu_enable_read})
     );
 
     assign mem_addr_out = {2'b0,cpu_addr_in[31:2]};
@@ -70,7 +71,7 @@ module riscv_memory_iface(
         if (cpu_enable_read) begin
             case (cpu_size_read)
                 `MASK_B: begin
-                    case (cpu_addr_in[1:0])
+                    case (cpu_read_addr[1:0])
                         2'b00:      cpu_data_out = {{24{mem_data_in[7]}},mem_data_in[7:0]};
                         2'b01:      cpu_data_out = {{24{mem_data_in[15]}},mem_data_in[15:8]};
                         2'b10:      cpu_data_out = {{24{mem_data_in[23]}},mem_data_in[23:16]};
@@ -78,7 +79,7 @@ module riscv_memory_iface(
                     endcase
                 end
                 `MASK_BU: begin
-                    case (cpu_addr_in[1:0])
+                    case (cpu_read_addr[1:0])
                         2'b00:      cpu_data_out = {24'b0,mem_data_in[7:0]};
                         2'b01:      cpu_data_out = {24'b0,mem_data_in[15:8]};
                         2'b10:      cpu_data_out = {24'b0,mem_data_in[23:16]};
@@ -86,21 +87,21 @@ module riscv_memory_iface(
                     endcase
                 end
                 `MASK_H: begin
-                    case (cpu_addr_in[1:0])
+                    case (cpu_read_addr[1:0])
                         2'b00:      cpu_data_out = {{16{mem_data_in[15]}},mem_data_in[15:0]};
                         2'b10:      cpu_data_out = {{16{mem_data_in[31]}},mem_data_in[31:16]};
                         default:    cpu_data_out = 32'h0;
                     endcase
                 end
                 `MASK_HU: begin
-                    case (cpu_addr_in[1:0])
+                    case (cpu_read_addr[1:0])
                         2'b00:      cpu_data_out = {16'b0,mem_data_in[15:0]};
                         2'b10:      cpu_data_out = {16'b0,mem_data_in[31:16]};
                         default:    cpu_data_out = 32'h0;
                     endcase
                 end
                 `MASK_W: begin
-                    case (cpu_addr_in[1:0])
+                    case (cpu_read_addr[1:0])
                         2'b00:      cpu_data_out = mem_data_in;
                         default:    cpu_data_out = 32'h0;
                     endcase

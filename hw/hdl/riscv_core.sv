@@ -127,7 +127,6 @@ module riscv_core (
     logic [31:0]    DEBUG2_EX_B;
     logic [31:0]    DEBUG2_EX_RESULT;
     logic [3:0]     DEBUG2_EX_ALU_FUNC;
-    logic [1:0]     DEBUG2_EX_PC_SEL;
     logic           DEBUG2_EX_BRANCH_TAKEN;
     logic [31:0]    DEBUG3_MEM_ADDR;
     logic [31:0]    DEBUG3_MEM_DATA;
@@ -157,7 +156,6 @@ module riscv_core (
     assign DEBUG2_EX_B   = EX.b;
     assign DEBUG2_EX_RESULT = ex_alu_result;
     assign DEBUG2_EX_ALU_FUNC = EX.alu_func;
-    assign DEBUG2_EX_PC_SEL = EX.pc_sel;
     assign DEBUG2_EX_BRANCH_TAKEN = ex_br_taken;
     assign DEBUG3_MEM_ADDR = MEM.addr;
     assign DEBUG3_MEM_DATA = MEM.alu_result;
@@ -185,6 +183,7 @@ module riscv_core (
     //  - The current instruction is actually using RS1/RS2
     //  - There is a load instruction in EX, MEM, or WB1
     //  - Said load instruction has an RD equal to RS1/RS2
+    //  - ENSURE THERE IS A BYPASS FROM WB2
 
     assign ltu_stall_rs1 = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) &&
                            ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs1) ||
@@ -218,55 +217,57 @@ module riscv_core (
     always_comb begin
         if (raw_rs1_ex) begin
             case (EX.wb_sel)
-                `WRITEBACK_PC4: id_operand_a = EX.pc + 4;
-                default:        id_operand_a = ex_alu_result;
+                `WRITEBACK_PC4:     id_operand_a = EX.pc + 4;
+                default:            id_operand_a = ex_alu_result;
             endcase
         end else if (raw_rs1_mem) begin
             case (MEM.wb_sel)
-                `WRITEBACK_PC4: id_operand_a = MEM.pc + 4;
-                default:        id_operand_a = MEM.alu_result;
+                `WRITEBACK_PC4:     id_operand_a = MEM.pc + 4;
+                default:            id_operand_a = MEM.alu_result;
             endcase
         end else if (raw_rs1_wb1) begin
             case (WB1.wb_sel)
-                `WRITEBACK_PC4: id_operand_a = WB1.pc + 4;
-                default:        id_operand_a = WB1.result;
+                `WRITEBACK_PC4:     id_operand_a = WB1.pc + 4;
+                default:            id_operand_a = WB1.result;
             endcase
         end else if (raw_rs1_wb2) begin
             case (WB2.wb_sel)
-                `WRITEBACK_PC4: id_operand_a = WB2.pc + 4;
-                default:        id_operand_a = WB2.result;
+                `WRITEBACK_PC4:     id_operand_a = WB2.pc + 4;
+                `WRITEBACK_DATA:    id_operand_a = mem_data_out;
+                default:            id_operand_a = WB2.result;
             endcase
         end else begin
             case (id_op1_sel)
-                `OP1_RS1:       id_operand_a = id_rd1;
-                `OP1_PC:        id_operand_a = ID.pc;
+                `OP1_RS1:           id_operand_a = id_rd1;
+                `OP1_PC:            id_operand_a = ID.pc;
             endcase
         end
 
         if (raw_rs2_ex) begin
             case (EX.wb_sel)
-                `WRITEBACK_PC4: id_operand_b = EX.pc + 4;
-                default:        id_operand_b = ex_alu_result;
+                `WRITEBACK_PC4:     id_operand_b = EX.pc + 4;
+                default:            id_operand_b = ex_alu_result;
             endcase
         end else if (raw_rs2_mem) begin
             case (MEM.wb_sel)
-                `WRITEBACK_PC4: id_operand_b = MEM.pc + 4;
-                default:        id_operand_b = MEM.alu_result;
+                `WRITEBACK_PC4:     id_operand_b = MEM.pc + 4;
+                default:            id_operand_b = MEM.alu_result;
             endcase
         end else if (raw_rs2_wb1) begin
             case (WB1.wb_sel)
-                `WRITEBACK_PC4: id_operand_b = WB1.pc + 4;
-                default:        id_operand_b = WB1.result;
+                `WRITEBACK_PC4:     id_operand_b = WB1.pc + 4;
+                default:            id_operand_b = WB1.result;
             endcase
         end else if (raw_rs2_wb2) begin
             case (WB2.wb_sel)
-                `WRITEBACK_PC4: id_operand_b = WB2.pc + 4;
-                default:        id_operand_b = WB2.result;
+                `WRITEBACK_PC4:     id_operand_b = WB2.pc + 4;
+                `WRITEBACK_DATA:    id_operand_b = mem_data_out;
+                default:            id_operand_b = WB2.result;
             endcase
         end else begin
             case (id_op2_sel)
-                `OP2_RS2:       id_operand_b = id_rd1;
-                `OP2_IMM:       id_operand_b = id_imm;
+                `OP2_RS2:           id_operand_b = id_rd2;
+                `OP2_IMM:           id_operand_b = id_imm;
             endcase
         end
     end
@@ -376,7 +377,7 @@ module riscv_core (
             MEM.pc <= EX.pc;
             MEM.rd <= EX.rd;
             MEM.alu_result <= ex_alu_result;
-            MEM.addr <= EX.imm + ex_alu_result;
+            MEM.addr <= EX.imm + EX.a;
             MEM.wb_sel <= EX.wb_sel;
             MEM.werf <= EX.werf;
             MEM.dmem_size <= EX.dmem_size;
