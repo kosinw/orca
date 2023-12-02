@@ -145,9 +145,11 @@ module riscv_core (
     assign DEBUG5_WB_WERF = WB2.werf;
 `endif // TESTBENCH
 
-    // data hazards signals
+    // hazard signals
+    logic ltu_stall_rs1;
+    logic ltu_stall_rs2;
 
-    // control hazard signals
+    logic stall;
     logic annul;
 
     //////////////////////////////////////////////////////////////////////
@@ -159,25 +161,44 @@ module riscv_core (
     assign annul = (EX.pc_sel === `PC_SEL_BRJMP && ex_br_taken) ||
                    (EX.pc_sel === `PC_SEL_ALU);
 
+    // Load-to-use stall is only active when:
+    //  - The current instruction is actually using RS1/RS2
+    //  - There is a load instruction in EX, MEM, or WB1
+    //  - Said load instruction has an RD equal to RS1/RS2
+
+    assign ltu_stall_rs1 = (id_op1_sel === `OP1_RS1) &&
+                           ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs1) ||
+                            (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs1) ||
+                            (WB1.wb_sel === `WRITEBACK_DATA && WB1.rd == id_rs1));
+
+    // NOTE(kosinw): Edge case where store use rs2 but not in execute
+    assign ltu_stall_rs2 = (id_op2_sel === `OP2_RS2 || id_dmem_write_enable) &&
+                        ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs2) ||
+                        (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs2) ||
+                        (WB1.wb_sel === `WRITEBACK_DATA && WB1.rd == id_rs2));
+
+    assign stall = ltu_stall_rs1 || ltu_stall_rs2;
+
     //////////////////////////////////////////////////////////////////////
     //
     // INSTRUCTION FETCH (IF)
     //
     //////////////////////////////////////////////////////////////////////
 
-    assign imem_addr_out = PC[31:2];
+    assign imem_addr_out = PC;
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             PC <= 0;
         end else begin
-            // TODO(kosinw): Check for stall before updating this
             if (annul) begin
                 case (EX.pc_sel)
                     `PC_SEL_BRJMP:  PC <= EX.br_target;
                     `PC_SEL_ALU:    PC <= ex_alu_result;
                     default:        PC <= PC + 4;
                 endcase
+            end else if (stall) begin
+                PC <= PC;
             end else begin
                 PC <= PC + 4;
             end
@@ -194,10 +215,11 @@ module riscv_core (
         if (rst_in) begin
             ID <= '0;
         end else begin
-            // TODO(kosinw): Check for stall before updating this
             if (annul) begin
                 ID.pc <= `ZERO;
                 ID.instr <= `NOP;
+            end else if (stall) begin
+                ID <= ID;
             end else begin
                 ID.pc <= PC;
                 ID.instr <= imem_data_in;
@@ -215,8 +237,8 @@ module riscv_core (
         if (rst_in) begin
             EX <= '0;
         end else begin
-            // TODO(kosinw): Check for stall / annulment / bypassing before updating this
-            if (annul) begin
+            // TODO(kosinw): Check for bypassing before updating this
+            if (annul || stall) begin
                 EX.pc           <= `ZERO;
                 EX.br_target    <= `ZERO;
                 EX.rd2          <= `ZERO;
