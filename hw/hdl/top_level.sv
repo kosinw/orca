@@ -43,6 +43,8 @@ module top_level(
     logic video_vsync, video_hsync, video_active_draw, video_new_frame;
     logic [7:0] video_red, video_green, video_blue;
 
+    // riscv core
+
     ////////////////////////////////////////////////////////////
     // BLOCKS
     ////////////////////////////////////////////////////////////
@@ -61,36 +63,48 @@ module top_level(
     );
 
     // TODO(kosinw): Remove me, just for testing keyboard logic
-    logic [7:0] mkb_scancode;
-    logic mkb_valid;
+    // logic [7:0] mkb_scancode;
+    // logic mkb_valid;
 
-    ps2_rx mkb (
-        .clk_in(clk_100mhz),
-        .rst_in(sys_rst),
-        .ps2_clk_in(pmodb[2]),
-        .ps2_data_in(pmodb[0]),
-        .valid_out(mkb_valid),
-        .error_out(),
-        .scancode_out(mkb_scancode)
-    );
+    // ps2_rx mkb (
+    //     .clk_in(clk_100mhz),
+    //     .rst_in(sys_rst),
+    //     .ps2_clk_in(pmodb[2]),
+    //     .ps2_data_in(pmodb[0]),
+    //     .valid_out(mkb_valid),
+    //     .error_out(),
+    //     .scancode_out(mkb_scancode)
+    // );
 
-    logic [31:0] scancode_buffer;
+    // logic [31:0] scancode_buffer;
+    // logic [6:0] ss_c;
+
+    // always_ff @(posedge clk_100mhz) begin
+    //     if (sys_rst) begin
+    //         scancode_buffer <= 32'h0;
+    //     end else begin
+    //         if (mkb_valid) begin
+    //             scancode_buffer <= {scancode_buffer[23:0],mkb_scancode};
+    //         end
+    //     end
+    // end
+
+    logic [31:0] pc;
     logic [6:0] ss_c;
 
-    always_ff @(posedge clk_100mhz) begin
-        if (sys_rst) begin
-            scancode_buffer <= 32'h0;
-        end else begin
-            if (mkb_valid) begin
-                scancode_buffer <= {scancode_buffer[23:0],mkb_scancode};
-            end
-        end
-    end
+    riscv_core core (
+        .clk_in(clk_100mhz),
+        .rst_in(sys_rst),
+        .imem_data_in(32'h13),
+        .imem_addr_out(pc),
+        .dmem_addr_out(),
+        .dmem_data_in(32'hDEADBEEF)
+    );
 
     seven_segment_controller mssc (
         .clk_in(clk_100mhz),
         .rst_in(sys_rst),
-        .val_in(scancode_buffer),
+        .val_in(pc),
         .cat_out(ss_c),
         .an_out({ss0_an,ss1_an})
     );
