@@ -60,7 +60,7 @@ module riscv_decode(
                 op1_sel_out = `OP1_PC;
                 op2_sel_out = `OP2_IMM;
                 writeback_sel_out = `WRITEBACK_ALU;
-                alu_func_out = `ALU_FUNC_LUI;
+                alu_func_out = `ALU_FUNC_COPY2;
                 write_enable_rf_out = `ON;
                 dmem_size_out = `MASK_NONE;
                 dmem_read_enable_out = `OFF;
@@ -137,9 +137,9 @@ module riscv_decode(
                 br_func_out = `BR_FUNC_NONE;
                 pc_sel_out = `PC_SEL_NEXTPC;
                 op1_sel_out = `OP1_RS1;
-                op2_sel_out = `OP2_IMM;
+                op2_sel_out = `OP2_RS2;
                 writeback_sel_out = `WRITEBACK_X;
-                alu_func_out = `ALU_FUNC_ADD;
+                alu_func_out = `ALU_FUNC_COPY2;
                 write_enable_rf_out = `OFF;
                 case (funct3)
                     `FUNCT3_MEM_B:   dmem_size_out = `MASK_B;

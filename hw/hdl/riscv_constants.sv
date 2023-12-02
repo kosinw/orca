@@ -60,7 +60,7 @@
 `define ALU_FUNC_OR         4'd9
 `define ALU_FUNC_AND        4'd10
 `define ALU_FUNC_JALR       4'd11
-`define ALU_FUNC_LUI        4'd12
+`define ALU_FUNC_COPY2      4'd12
 `define ALU_FUNC_BR         4'd13
 
 // br func

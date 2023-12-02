@@ -22,7 +22,7 @@ module riscv_core (
     typedef struct packed {
         logic   [31:0]  pc;
         logic   [31:0]  br_target;
-        logic   [31:0]  rd2;
+        logic   [31:0]  imm;
         logic   [4:0]   rd;
         logic   [31:0]  a;
         logic   [31:0]  b;
@@ -40,7 +40,7 @@ module riscv_core (
         logic   [31:0]  pc;
         logic   [4:0]   rd;
         logic   [31:0]  alu_result;
-        logic   [31:0]  rd2;
+        logic   [31:0]  addr;
         logic   [1:0]   wb_sel;
         logic           werf;
         logic   [2:0]   dmem_size;
@@ -81,6 +81,8 @@ module riscv_core (
     logic [2:0] id_dmem_size;
     logic id_dmem_read_enable;
     logic id_dmem_write_enable;
+    logic [31:0] id_operand_a;
+    logic [31:0] id_operand_b;
 
     // EX stage combinational signals
     logic [31:0] ex_alu_result;
@@ -133,8 +135,8 @@ module riscv_core (
     assign DEBUG2_EX_ALU_FUNC = EX.alu_func;
     assign DEBUG2_EX_PC_SEL = EX.pc_sel;
     assign DEBUG2_EX_BRANCH_TAKEN = ex_br_taken;
-    assign DEBUG3_MEM_ADDR = MEM.alu_result;
-    assign DEBUG3_MEM_DATA = MEM.rd2;
+    assign DEBUG3_MEM_ADDR = MEM.addr;
+    assign DEBUG3_MEM_DATA = MEM.alu_result;
     assign DEBUG3_MEM_READ_ENABLE = MEM.dmem_read_enable;
     assign DEBUG3_MEM_WRITE_ENABLE = MEM.dmem_write_enable;
     assign DEBUG4_WB_SEL = WB1.wb_sel;
@@ -149,6 +151,15 @@ module riscv_core (
     logic ltu_stall_rs1;
     logic ltu_stall_rs2;
 
+    logic raw_rs1_ex;
+    logic raw_rs2_ex;
+    logic raw_rs1_mem;
+    logic raw_rs2_mem;
+    logic raw_rs1_wb1;
+    logic raw_rs2_wb1;
+    logic raw_rs1_wb2;
+    logic raw_rs2_wb2;
+
     logic stall;
     logic annul;
 
@@ -161,7 +172,7 @@ module riscv_core (
     assign annul = (EX.pc_sel === `PC_SEL_BRJMP && ex_br_taken) ||
                    (EX.pc_sel === `PC_SEL_ALU);
 
-    // Load-to-use stall is only active when:
+    // Load-to-use hazard is active when:
     //  - The current instruction is actually using RS1/RS2
     //  - There is a load instruction in EX, MEM, or WB1
     //  - Said load instruction has an RD equal to RS1/RS2
@@ -171,13 +182,84 @@ module riscv_core (
                             (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs1) ||
                             (WB1.wb_sel === `WRITEBACK_DATA && WB1.rd == id_rs1));
 
-    // NOTE(kosinw): Edge case where store use rs2 but not in execute
-    assign ltu_stall_rs2 = (id_op2_sel === `OP2_RS2 || id_dmem_write_enable) &&
+    assign ltu_stall_rs2 = (id_op2_sel === `OP2_RS2) &&
                         ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs2) ||
                         (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs2) ||
                         (WB1.wb_sel === `WRITEBACK_DATA && WB1.rd == id_rs2));
 
     assign stall = ltu_stall_rs1 || ltu_stall_rs2;
+
+    // Read-after-write hazard is active when:
+    //  - The current instruction is actually using RS1/RS2
+    //  - There is an instruction further in the pipeline which writebacks to register file (WERF)
+    //  - Destination register of writeback instruction matches RS1 (or RS2)
+
+    assign raw_rs1_ex  = (id_op1_sel === `OP1_RS1) && (EX.werf  && EX.rd  === id_rs1);
+    assign raw_rs1_mem = (id_op1_sel === `OP1_RS1) && (MEM.werf && MEM.rd === id_rs1);
+    assign raw_rs1_wb1 = (id_op1_sel === `OP1_RS1) && (WB1.werf && WB1.rd === id_rs1);
+    assign raw_rs1_wb2 = (id_op1_sel === `OP1_RS1) && (WB2.werf && WB2.rd === id_rs1);
+
+    // NOTE(kosinw): Edge case where stores use RS2 but not in operator select
+    assign raw_rs2_ex  = (id_op2_sel === `OP2_RS2) && (EX.werf  && EX.rd  === id_rs2);
+    assign raw_rs2_mem = (id_op2_sel === `OP2_RS2) && (MEM.werf && MEM.rd === id_rs2);
+    assign raw_rs2_wb1 = (id_op2_sel === `OP2_RS2) && (WB1.werf && WB1.rd === id_rs2);
+    assign raw_rs2_wb2 = (id_op2_sel === `OP2_RS2) && (WB2.werf && WB2.rd === id_rs2);
+
+    always_comb begin
+        if (raw_rs1_ex) begin
+            case (EX.wb_sel)
+                `WRITEBACK_PC4: id_operand_a = EX.pc + 4;
+                default:        id_operand_a = ex_alu_result;
+            endcase
+        end else if (raw_rs1_mem) begin
+            case (MEM.wb_sel)
+                `WRITEBACK_PC4: id_operand_a = MEM.pc + 4;
+                default:        id_operand_a = MEM.alu_result;
+            endcase
+        end else if (raw_rs1_wb1) begin
+            case (WB1.wb_sel)
+                `WRITEBACK_PC4: id_operand_a = WB1.pc + 4;
+                default:        id_operand_a = WB1.result;
+            endcase
+        end else if (raw_rs1_wb2) begin
+            case (WB2.wb_sel)
+                `WRITEBACK_PC4: id_operand_a = WB2.pc + 4;
+                default:        id_operand_a = WB2.result;
+            endcase
+        end else begin
+            case (id_op1_sel)
+                `OP1_RS1:       id_operand_a = id_rd1;
+                `OP1_PC:        id_operand_a = ID.pc;
+            endcase
+        end
+
+        if (raw_rs2_ex) begin
+            case (EX.wb_sel)
+                `WRITEBACK_PC4: id_operand_b = EX.pc + 4;
+                default:        id_operand_b = ex_alu_result;
+            endcase
+        end else if (raw_rs2_mem) begin
+            case (MEM.wb_sel)
+                `WRITEBACK_PC4: id_operand_b = MEM.pc + 4;
+                default:        id_operand_b = MEM.alu_result;
+            endcase
+        end else if (raw_rs2_wb1) begin
+            case (WB1.wb_sel)
+                `WRITEBACK_PC4: id_operand_b = WB1.pc + 4;
+                default:        id_operand_b = WB1.result;
+            endcase
+        end else if (raw_rs2_wb2) begin
+            case (WB2.wb_sel)
+                `WRITEBACK_PC4: id_operand_b = WB2.pc + 4;
+                default:        id_operand_b = WB2.result;
+            endcase
+        end else begin
+            case (id_op2_sel)
+                `OP2_RS2:       id_operand_b = id_rd1;
+                `OP2_IMM:       id_operand_b = id_imm;
+            endcase
+        end
+    end
 
     //////////////////////////////////////////////////////////////////////
     //
@@ -241,7 +323,7 @@ module riscv_core (
             if (annul || stall) begin
                 EX.pc           <= `ZERO;
                 EX.br_target    <= `ZERO;
-                EX.rd2          <= `ZERO;
+                EX.imm          <= `ZERO;
                 EX.rd           <= `X0;
                 EX.a            <= `ZERO;
                 EX.b            <= `ZERO;
@@ -256,10 +338,10 @@ module riscv_core (
             end else begin
                 EX.pc        <= ID.pc;
                 EX.br_target <= id_imm + ID.pc;
-                EX.rd2       <= id_rd2;
+                EX.imm       <= id_imm;
                 EX.rd        <= id_rd;
-                EX.a         <= (id_op1_sel === `OP1_RS1) ? id_rd1 : ID.pc;
-                EX.b         <= (id_op2_sel === `OP2_RS2) ? id_rd2 : id_imm;
+                EX.a         <= id_operand_a;
+                EX.b         <= id_operand_b;
                 EX.br_func   <= id_br_func;
                 EX.alu_func  <= id_alu_func;
                 EX.pc_sel    <= id_pc_sel;
@@ -285,7 +367,7 @@ module riscv_core (
             MEM.pc <= EX.pc;
             MEM.rd <= EX.rd;
             MEM.alu_result <= ex_alu_result;
-            MEM.rd2 <= EX.rd2;
+            MEM.addr <= EX.imm + ex_alu_result;
             MEM.wb_sel <= EX.wb_sel;
             MEM.werf <= EX.werf;
             MEM.dmem_size <= EX.dmem_size;
@@ -373,8 +455,8 @@ module riscv_core (
         .clk_in(clk_in),
         .rst_in(rst_in),
 
-        .cpu_addr_in(MEM.alu_result),
-        .cpu_data_in(MEM.rd2),
+        .cpu_addr_in(MEM.addr),
+        .cpu_data_in(MEM.alu_result),
         .cpu_size_in(MEM.dmem_size),
         .cpu_read_enable_in(MEM.dmem_read_enable),
         .cpu_write_enable_in(MEM.dmem_write_enable),

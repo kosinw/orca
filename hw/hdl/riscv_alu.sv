@@ -35,7 +35,7 @@ module riscv_alu(
                 result_out = a_in+b_in;
                 result_out = {result_out[31:1],1'b0};
             end
-            `ALU_FUNC_LUI:      result_out = b_in;
+            `ALU_FUNC_COPY2:    result_out = b_in;
             `ALU_FUNC_BR:       begin
                 result_out = `ZERO;
                 case (br_func_in)
