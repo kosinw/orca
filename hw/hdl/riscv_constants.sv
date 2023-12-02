@@ -5,6 +5,7 @@
 `define OFF                 1'b0
 `define ZERO                32'b0
 `define NOP                 32'h00000013
+`define X0                  5'h0
 
 // opcodes
 `define OPCODE_AUIPC        7'b0010111     // auipc

@@ -148,6 +148,16 @@ module riscv_core (
     // data hazards signals
 
     // control hazard signals
+    logic annul;
+
+    //////////////////////////////////////////////////////////////////////
+    //
+    // HAZARD MANAGEMENT
+    //
+    //////////////////////////////////////////////////////////////////////
+
+    assign annul = (EX.pc_sel === `PC_SEL_BRJMP && ex_br_taken) ||
+                   (EX.pc_sel === `PC_SEL_ALU);
 
     //////////////////////////////////////////////////////////////////////
     //
@@ -161,13 +171,16 @@ module riscv_core (
         if (rst_in) begin
             PC <= 0;
         end else begin
-            // TODO(kosinw): Check for stall (annul takes precedence) before updating this
-            case (EX.pc_sel)
-                `PC_SEL_NEXTPC:     PC <= PC + 4;
-                `PC_SEL_BRJMP:      PC <= (ex_br_taken) ? EX.br_target : PC + 4;
-                `PC_SEL_ALU:        PC <= ex_alu_result;
-                default:            PC <= PC + 4;
-            endcase
+            // TODO(kosinw): Check for stall before updating this
+            if (annul) begin
+                case (EX.pc_sel)
+                    `PC_SEL_BRJMP:  PC <= EX.br_target;
+                    `PC_SEL_ALU:    PC <= ex_alu_result;
+                    default:        PC <= PC + 4;
+                endcase
+            end else begin
+                PC <= PC + 4;
+            end
         end
     end
 
@@ -181,9 +194,14 @@ module riscv_core (
         if (rst_in) begin
             ID <= '0;
         end else begin
-            // TODO(kosinw): Check for stall / annulment before updating this
-            ID.pc <= PC;
-            ID.instr <= imem_data_in;
+            // TODO(kosinw): Check for stall before updating this
+            if (annul) begin
+                ID.pc <= `ZERO;
+                ID.instr <= `NOP;
+            end else begin
+                ID.pc <= PC;
+                ID.instr <= imem_data_in;
+            end
         end
     end
 
@@ -198,20 +216,37 @@ module riscv_core (
             EX <= '0;
         end else begin
             // TODO(kosinw): Check for stall / annulment / bypassing before updating this
-            EX.pc        <= ID.pc;
-            EX.br_target <= id_imm + ID.pc;
-            EX.rd2       <= id_rd2;
-            EX.rd        <= id_rd;
-            EX.a         <= (id_op1_sel === `OP1_RS1) ? id_rd1 : ID.pc;
-            EX.b         <= (id_op2_sel === `OP2_RS2) ? id_rd2 : id_imm;
-            EX.br_func   <= id_br_func;
-            EX.alu_func  <= id_alu_func;
-            EX.pc_sel    <= id_pc_sel;
-            EX.wb_sel    <= id_wb_sel;
-            EX.werf      <= id_we_rf;
-            EX.dmem_size <= id_dmem_size;
-            EX.dmem_read_enable <= id_dmem_read_enable;
-            EX.dmem_write_enable <= id_dmem_write_enable;
+            if (annul) begin
+                EX.pc           <= `ZERO;
+                EX.br_target    <= `ZERO;
+                EX.rd2          <= `ZERO;
+                EX.rd           <= `X0;
+                EX.a            <= `ZERO;
+                EX.b            <= `ZERO;
+                EX.br_func      <= `BR_FUNC_NONE;
+                EX.alu_func     <= `ALU_FUNC_NONE;
+                EX.pc_sel       <= `PC_SEL_NEXTPC;
+                EX.wb_sel       <= `WRITEBACK_X;
+                EX.werf         <= `OFF;
+                EX.dmem_size    <= `MASK_NONE;
+                EX.dmem_read_enable <= `OFF;
+                EX.dmem_write_enable <= `OFF;
+            end else begin
+                EX.pc        <= ID.pc;
+                EX.br_target <= id_imm + ID.pc;
+                EX.rd2       <= id_rd2;
+                EX.rd        <= id_rd;
+                EX.a         <= (id_op1_sel === `OP1_RS1) ? id_rd1 : ID.pc;
+                EX.b         <= (id_op2_sel === `OP2_RS2) ? id_rd2 : id_imm;
+                EX.br_func   <= id_br_func;
+                EX.alu_func  <= id_alu_func;
+                EX.pc_sel    <= id_pc_sel;
+                EX.wb_sel    <= id_wb_sel;
+                EX.werf      <= id_we_rf;
+                EX.dmem_size <= id_dmem_size;
+                EX.dmem_read_enable <= id_dmem_read_enable;
+                EX.dmem_write_enable <= id_dmem_write_enable;
+            end
         end
     end
 
