@@ -94,8 +94,27 @@ module riscv_core (
     // WB2 stage combinational signals
     logic [31:0] wb_data;
 
+    // Hazard management combinational signals
+    logic ltu_stall_rs1;
+    logic ltu_stall_rs2;
+
+    logic raw_rs1_ex;
+    logic raw_rs2_ex;
+    logic raw_rs1_mem;
+    logic raw_rs2_mem;
+    logic raw_rs1_wb1;
+    logic raw_rs2_wb1;
+    logic raw_rs1_wb2;
+    logic raw_rs2_wb2;
+
+    logic stall;
+    logic annul;
+
     // probes for testbenching
 `ifdef TESTBENCH
+    logic           DEBUG0_STALL;
+    logic           DEBUG0_BYPASS;
+    logic           DEBUG0_ANNUL;
     logic [31:0]    DEBUG0_IF_PC;
     logic [31:0]    DEBUG1_ID_INSTR;
     logic [4:0]     DEBUG1_ID_RS1;
@@ -121,6 +140,11 @@ module riscv_core (
     logic [31:0]    DEBUG5_WB_PC;
     logic           DEBUG5_WB_WERF;
 
+    assign DEBUG0_STALL = stall;
+    assign DEBUG0_BYPASS = (raw_rs1_ex || raw_rs1_mem || raw_rs1_wb1) ||
+                           (raw_rs1_wb2 || raw_rs2_ex || raw_rs2_mem) ||
+                           (raw_rs2_wb1 || raw_rs2_wb2);
+    assign DEBUG0_ANNUL = annul;
     assign DEBUG0_IF_PC = PC;
     assign DEBUG1_ID_INSTR = ID.instr;
     assign DEBUG1_ID_RS1 = id_rs1;
@@ -147,22 +171,6 @@ module riscv_core (
     assign DEBUG5_WB_WERF = WB2.werf;
 `endif // TESTBENCH
 
-    // hazard signals
-    logic ltu_stall_rs1;
-    logic ltu_stall_rs2;
-
-    logic raw_rs1_ex;
-    logic raw_rs2_ex;
-    logic raw_rs1_mem;
-    logic raw_rs2_mem;
-    logic raw_rs1_wb1;
-    logic raw_rs2_wb1;
-    logic raw_rs1_wb2;
-    logic raw_rs2_wb2;
-
-    logic stall;
-    logic annul;
-
     //////////////////////////////////////////////////////////////////////
     //
     // HAZARD MANAGEMENT
@@ -173,16 +181,17 @@ module riscv_core (
                    (EX.pc_sel === `PC_SEL_ALU);
 
     // Load-to-use hazard is active when:
+    //  - The incident register cannot be x0
     //  - The current instruction is actually using RS1/RS2
     //  - There is a load instruction in EX, MEM, or WB1
     //  - Said load instruction has an RD equal to RS1/RS2
 
-    assign ltu_stall_rs1 = (id_op1_sel === `OP1_RS1) &&
+    assign ltu_stall_rs1 = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) &&
                            ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs1) ||
                             (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs1) ||
                             (WB1.wb_sel === `WRITEBACK_DATA && WB1.rd == id_rs1));
 
-    assign ltu_stall_rs2 = (id_op2_sel === `OP2_RS2) &&
+    assign ltu_stall_rs2 = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) &&
                         ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs2) ||
                         (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs2) ||
                         (WB1.wb_sel === `WRITEBACK_DATA && WB1.rd == id_rs2));
@@ -190,20 +199,21 @@ module riscv_core (
     assign stall = ltu_stall_rs1 || ltu_stall_rs2;
 
     // Read-after-write hazard is active when:
+    //  - The incident register cannot be x0
     //  - The current instruction is actually using RS1/RS2
     //  - There is an instruction further in the pipeline which writebacks to register file (WERF)
     //  - Destination register of writeback instruction matches RS1 (or RS2)
 
-    assign raw_rs1_ex  = (id_op1_sel === `OP1_RS1) && (EX.werf  && EX.rd  === id_rs1);
-    assign raw_rs1_mem = (id_op1_sel === `OP1_RS1) && (MEM.werf && MEM.rd === id_rs1);
-    assign raw_rs1_wb1 = (id_op1_sel === `OP1_RS1) && (WB1.werf && WB1.rd === id_rs1);
-    assign raw_rs1_wb2 = (id_op1_sel === `OP1_RS1) && (WB2.werf && WB2.rd === id_rs1);
+    assign raw_rs1_ex  = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (EX.werf  && EX.rd  === id_rs1);
+    assign raw_rs1_mem = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (MEM.werf && MEM.rd === id_rs1);
+    assign raw_rs1_wb1 = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (WB1.werf && WB1.rd === id_rs1);
+    assign raw_rs1_wb2 = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (WB2.werf && WB2.rd === id_rs1);
 
     // NOTE(kosinw): Edge case where stores use RS2 but not in operator select
-    assign raw_rs2_ex  = (id_op2_sel === `OP2_RS2) && (EX.werf  && EX.rd  === id_rs2);
-    assign raw_rs2_mem = (id_op2_sel === `OP2_RS2) && (MEM.werf && MEM.rd === id_rs2);
-    assign raw_rs2_wb1 = (id_op2_sel === `OP2_RS2) && (WB1.werf && WB1.rd === id_rs2);
-    assign raw_rs2_wb2 = (id_op2_sel === `OP2_RS2) && (WB2.werf && WB2.rd === id_rs2);
+    assign raw_rs2_ex  = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (EX.werf  && EX.rd  === id_rs2);
+    assign raw_rs2_mem = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (MEM.werf && MEM.rd === id_rs2);
+    assign raw_rs2_wb1 = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (WB1.werf && WB1.rd === id_rs2);
+    assign raw_rs2_wb2 = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (WB2.werf && WB2.rd === id_rs2);
 
     always_comb begin
         if (raw_rs1_ex) begin
@@ -319,7 +329,6 @@ module riscv_core (
         if (rst_in) begin
             EX <= '0;
         end else begin
-            // TODO(kosinw): Check for bypassing before updating this
             if (annul || stall) begin
                 EX.pc           <= `ZERO;
                 EX.br_target    <= `ZERO;
