@@ -6,14 +6,13 @@ module riscv_core (
     input wire clk_in,
     input wire rst_in,
 
-    input wire [31:0] imem_data_in,
+    input  wire  [31:0] imem_data_in,
     output logic [31:0] imem_addr_out,
 
-    input wire [31:0] dmem_data_in,
     output logic [31:0] dmem_addr_out,
-    output logic dmem_read_enable_out,
-    output logic dmem_write_enable_out,
-    output logic [3:0] dmem_byte_enable_out
+    output logic [31:0] dmem_data_out,
+    output logic [3:0]  dmem_write_enable_out,
+    input  wire  [31:0] dmem_data_in
 );
     typedef struct packed {
         logic   [31:0]  pc;
@@ -21,6 +20,9 @@ module riscv_core (
     } InstructionDecodeState;
 
     typedef struct packed {
+        logic   [31:0]  pc;
+        logic   [31:0]  br_target;
+        logic   [31:0]  rd2;
         logic   [4:0]   rd;
         logic   [31:0]  a;
         logic   [31:0]  b;
@@ -35,8 +37,10 @@ module riscv_core (
     } ExecuteState;
 
     typedef struct packed {
+        logic   [31:0]  pc;
         logic   [4:0]   rd;
         logic   [31:0]  alu_result;
+        logic   [31:0]  rd2;
         logic   [1:0]   wb_sel;
         logic           werf;
         logic   [2:0]   dmem_size;
@@ -44,17 +48,25 @@ module riscv_core (
         logic           dmem_write_enable;
     } MemoryState;
 
+    typedef struct packed {
+        logic   [31:0]  pc;
+        logic   [4:0]   rd;
+        logic   [31:0]  result;
+        logic           werf;
+        logic   [1:0]   wb_sel;
+    } WritebackState;
+
     //
     //  The processor implements the base RV32I instruction set using a
     //  6-stage pipeline with 1 cycle instruction memory read and 2 cycle
     //  data memory read/write (in other words no cache misses.)
     //
 
-    logic [31:0]            pc;
-
+    logic [31:0]            PC;
     InstructionDecodeState  ID;
     ExecuteState            EX;
-    MemoryState             MEM1,MEM2;
+    MemoryState             MEM;
+    WritebackState          WB1, WB2;
 
     //////////////////////////////////////////////////////////////////////
     //
@@ -62,25 +74,14 @@ module riscv_core (
     //
     //////////////////////////////////////////////////////////////////////
 
-    logic [31:0] next_pc;
-
-    assign imem_addr_out = pc;
-
-    always_comb begin
-        // TODO(kosinw): Check for:
-        //  Branch annulment:
-        //      Caused by JAL, JALR, and branch instructions (PC_SEL_ALU in EX)
-        //  Stalls:
-        //      Caused by load data hazard
-        //      Caused by store data hazards
-        next_pc = pc + 4;
-    end
+    assign imem_addr_out = PC[31:2];
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
-            pc <= 0;
+            PC <= 0;
         end else begin
-            pc <= next_pc;
+            // TODO(kosinw): Check for stall / annulment before updating this
+            PC <= PC + 4;
         end
     end
 
@@ -90,7 +91,25 @@ module riscv_core (
     //
     //////////////////////////////////////////////////////////////////////
 
-    InstructionDecodeState d;
+    // InstructionDecodeState d;
+
+    // always_comb begin
+    //     d = ID;
+
+    //     // TODO(kosinw): Check for stall / annulment before updating this
+    //     d.pc = PC;
+    //     d.instr = imem_data_in;
+    // end
+
+    always_ff @(posedge clk_in) begin
+        if (rst_in) begin
+            ID <= '0;
+        end else begin
+            // TODO(kosinw): Check for stall / annulment before updating this
+            ID.pc <= PC;
+            ID.instr <= imem_data_in;
+        end
+    end
 
     logic [4:0] id_rs1, id_rs2, id_rd;
     logic [31:0] id_rd1, id_rd2;
@@ -105,75 +124,114 @@ module riscv_core (
     logic id_dmem_read_enable;
     logic id_dmem_write_enable;
 
-    always_comb begin
-        d = ID;
-
-        // TODO(kosinw): Check for stall / annulment before updating this
-        d.pc = pc;
-        d.instr = imem_data_in;
-    end
-
-    always_ff @(posedge clk_in) begin
-        if (rst_in) begin
-            ID.pc <= 0;
-            ID.instr <= 0;
-        end else begin
-            ID <= d;
-        end
-    end
-
     //////////////////////////////////////////////////////////////////////
     //
     // EXECUTE (EX)
     //
     //////////////////////////////////////////////////////////////////////
 
-    ExecuteState x;
+
+    // always_comb begin
+    //     ExecuteState x;
+    //     x = EX;
+
+    //     // TODO(kosinw): Check for stall / annulment before updating this
+    //     x.pc        = ID.pc;
+    //     x.br_target = id_imm + ID.pc; // TODO(kosinw): Maybe this isn't best place to do it in
+    //     x.rd2       = id_rd2;
+    //     x.rd        = id_rd;
+    //     x.a         = (id_op1_sel === `OP1_RS1) ? id_rd1 : ID.pc;
+    //     x.b         = (id_op2_sel === `OP2_RS2) ? id_rd2 : id_imm;
+    //     x.br_func   = id_br_func;
+    //     x.alu_func  = id_alu_func;
+    //     x.pc_sel    = id_pc_sel;
+    //     x.wb_sel    = id_wb_sel;
+    //     x.werf      = id_we_rf;
+    //     x.dmem_size = id_dmem_size;
+    //     x.dmem_read_enable = id_dmem_read_enable;
+    //     x.dmem_write_enable = id_dmem_write_enable;
+    // end
+
+    always_ff @(posedge clk_in) begin
+        if (rst_in) begin
+            EX <= '0;
+        end else begin
+            // TODO(kosinw): Check for stall / annulment before updating this
+            EX.pc        <= ID.pc;
+            EX.br_target <= id_imm + ID.pc;
+            EX.rd2       <= id_rd2;
+            EX.rd        <= id_rd;
+            EX.a         <= (id_op1_sel === `OP1_RS1) ? id_rd1 : ID.pc;
+            EX.b         <= (id_op2_sel === `OP2_RS2) ? id_rd2 : id_imm;
+            EX.br_func   <= id_br_func;
+            EX.alu_func  <= id_alu_func;
+            EX.pc_sel    <= id_pc_sel;
+            EX.wb_sel    <= id_wb_sel;
+            EX.werf      <= id_we_rf;
+            EX.dmem_size <= id_dmem_size;
+            EX.dmem_read_enable <= id_dmem_read_enable;
+            EX.dmem_write_enable <= id_dmem_write_enable;
+        end
+    end
 
     logic [31:0] ex_alu_result;
     logic ex_br_taken;
 
-    always_comb begin
-        x = EX;
-
-        // TODO(kosinw): Check for stall / annulment before updating this
-        x.rd            = id_rd;
-        x.a             = (id_op1_sel === `OP1_RS1) ? id_rd1 : d.pc;
-        x.b             = (id_op2_sel === `OP2_RS2) ? id_rd2 : id_imm;
-        x.br_func       = id_br_func;
-        x.alu_func      = id_alu_func;
-        x.pc_sel        = id_pc_sel;
-        x.wb_sel        = id_wb_sel;
-        x.werf          = id_we_rf;
-        x.dmem_size     = id_dmem_size;
-
-        x.dmem_read_enable = id_dmem_read_enable;
-        x.dmem_write_enable = id_dmem_write_enable;
-    end
+    //////////////////////////////////////////////////////////////////////
+    //
+    // MEMORY (MEM)
+    //
+    //////////////////////////////////////////////////////////////////////
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
-            EX.rd <= 0;
-            EX.a <= 0;
-            EX.b <= 0;
-            EX.br_func <= 0;
-            EX.alu_func <= 0;
-            EX.pc_sel <= 0;
-            EX.wb_sel <= 0;
-            EX.werf <= 0;
-            EX.dmem_size <= 0;
-            EX.dmem_read_enable <= 0;
-            EX.dmem_write_enable <= 0;
+            MEM <= '0;
         end else begin
-            EX <= x;
+            MEM.pc <= EX.pc;
+            MEM.rd <= EX.rd;
+            MEM.alu_result <= ex_alu_result;
+            MEM.rd2 <= EX.rd2;
+            MEM.wb_sel <= EX.wb_sel;
+            MEM.werf <= EX.werf;
+            MEM.dmem_size <= EX.dmem_size;
+            MEM.dmem_read_enable <= EX.dmem_read_enable;
+            MEM.dmem_write_enable <= EX.dmem_write_enable;
         end
     end
 
+    logic [31:0] mem_data_out;
+
     //////////////////////////////////////////////////////////////////////
     //
-    // MEMORY (MEM1 + MEM2)
+    // WRITEBACK (WB)
     //
     //////////////////////////////////////////////////////////////////////
+
+    logic [31:0] wb_data;
+
+    always_ff @(posedge clk_in) begin
+        if (rst_in) begin
+            WB1 <= '0;
+            WB2 <= '0;
+        end else begin
+            WB1.pc       <= MEM.pc;
+            WB1.rd       <= MEM.rd;
+            WB1.result   <= MEM.alu_result;
+            WB1.werf     <= MEM.werf;
+            WB1.wb_sel   <= MEM.wb_sel;
+
+            WB2 <= WB1;
+        end
+    end
+
+    always_comb begin
+        case (WB2.wb_sel)
+            `WRITEBACK_ALU:     wb_data = WB2.result;
+            `WRITEBACK_PC4:     wb_data = WB2.pc + 4;
+            `WRITEBACK_DATA:    wb_data = mem_data_out;
+            default:            wb_data = 32'h0;
+        endcase
+    end
 
     //////////////////////////////////////////////////////////////////////
     //
@@ -202,15 +260,13 @@ module riscv_core (
     riscv_regfile regfile (
         .clk_in(clk_in),
         .rst_in(rst_in),
-
         .ra_in(id_rs1),
         .rd1_out(id_rd1),
         .rb_in(id_rs2),
         .rd2_out(id_rd2),
-
-        .rd_in(5'b0),           // TDOO(kosinw): writeback
-        .wd_in(32'b0),          // TODO(kosinw): writeback
-        .write_enable_in(1'b0)  // TODO(kosinw): writeback
+        .rd_in(WB2.rd),
+        .wd_in(wb_data),
+        .write_enable_in(WB2.werf)
     );
 
     riscv_alu alu (
@@ -220,6 +276,23 @@ module riscv_core (
         .b_in(EX.b),
         .result_out(ex_alu_result),
         .branch_taken_out(ex_br_taken)
+    );
+
+    riscv_memory_iface dmem_iface (
+        .clk_in(clk_in),
+        .rst_in(rst_in),
+
+        .cpu_addr_in(MEM.alu_result),
+        .cpu_data_in(MEM.rd2),
+        .cpu_size_in(MEM.dmem_size),
+        .cpu_read_enable_in(MEM.dmem_read_enable),
+        .cpu_write_enable_in(MEM.dmem_write_enable),
+        .cpu_data_out(mem_data_out),
+
+        .mem_addr_out(dmem_addr_out),
+        .mem_data_out(dmem_data_out),
+        .mem_write_enable(dmem_write_enable_out),
+        .mem_data_in(dmem_data_in)
     );
 
 endmodule

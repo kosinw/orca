@@ -1,29 +1,33 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+`include "hdl/riscv_constants.sv"
+
 module riscv_core_tb;
     logic [31:0] INSTRUCTIONS [34:0];
 
     logic clk_in;
     logic rst_in;
+
     logic [31:0] imem_data_in;
     logic [31:0] imem_addr_out;
-    logic [31:0] dmem_data_in;
+
     logic [31:0] dmem_addr_out;
-    logic dmem_read_enable_out;
-    logic dmem_write_enable_out;
-    logic [3:0] dmem_byte_enable_out;
+    logic [31:0] dmem_data_out;
+    logic [3:0] dmem_write_enable_out;
+    logic [31:0] dmem_data_in;
 
     riscv_core uut (
         .clk_in(clk_in),
         .rst_in(rst_in),
+
         .imem_data_in(imem_data_in),
         .imem_addr_out(imem_addr_out),
-        .dmem_data_in(dmem_data_in),
+
         .dmem_addr_out(dmem_addr_out),
-        .dmem_read_enable_out(dmem_read_enable_out),
+        .dmem_data_out(dmem_data_out),
         .dmem_write_enable_out(dmem_write_enable_out),
-        .dmem_byte_enable_out(dmem_byte_enable_out)
+        .dmem_data_in(dmem_data_in)
     );
 
     initial begin
@@ -42,7 +46,7 @@ module riscv_core_tb;
 
         INSTRUCTIONS[10] = 32'hfe808583;     // lb x11, -24(x1)
         INSTRUCTIONS[11] = 32'hfe809583;     // lh x11, -24(x1)
-        INSTRUCTIONS[12] = 32'hfe80a583;     // lw x11, -24(x1)
+        INSTRUCTIONS[12] = 32'hfc00a583;     // lw x11, -64(x1)
         INSTRUCTIONS[13] = 32'hfe80c583;     // lbu x11, -24(x1)
         INSTRUCTIONS[14] = 32'hfe80d583;     // lhu x11, -24(x1)
 
@@ -84,14 +88,11 @@ module riscv_core_tb;
 
         clk_in = 0;
         rst_in = 1;
+        imem_data_in = `NOP;
+        dmem_data_in = 32'hDEADBEEF;
 
-        #10;
-
-        imem_data_in = 32'h00f00193; // addi x3, x0, 15
-
-        #20;
+        #25;
         rst_in = 0;
-        #10;
 
         for (integer i = 0; i <= 34; i = i + 1) begin
             imem_data_in = INSTRUCTIONS[i];

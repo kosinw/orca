@@ -85,10 +85,10 @@
 `define OP2_IMM            1'd1
 
 // writeback select
-`define WRITEBACK_ALU       2'd0
-`define WRITEBACK_PC4       2'd1
-`define WRITEBACK_DATA      2'd2
-`define WRITEBACK_X         2'd3
+`define WRITEBACK_X         2'd0
+`define WRITEBACK_ALU       2'd1
+`define WRITEBACK_PC4       2'd2
+`define WRITEBACK_DATA      2'd3
 
 // mask size
 `define MASK_NONE           3'd0

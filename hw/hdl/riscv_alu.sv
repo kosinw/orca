@@ -31,8 +31,11 @@ module riscv_alu(
             `ALU_FUNC_SRA:      result_out = (a_sign >>> b_in[4:0]);
             `ALU_FUNC_OR:       result_out = a_in | b_in;
             `ALU_FUNC_AND:      result_out = a_in & b_in;
-            `ALU_FUNC_JALR:     begin result_out = a_in+b_in; result_out = {result_out[31:1],1'b0}; end
-            `ALU_FUNC_LUI:      result_out = {b_in[19:0],12'b0};
+            `ALU_FUNC_JALR:     begin
+                result_out = a_in+b_in;
+                result_out = {result_out[31:1],1'b0};
+            end
+            `ALU_FUNC_LUI:      result_out = b_in;
             `ALU_FUNC_BR:       begin
                 result_out = `ZERO;
                 case (br_func_in)

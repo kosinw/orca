@@ -68,6 +68,8 @@ core_tb:
 		hdl/riscv_constants.sv			\
 		hdl/riscv_alu.sv				\
 		hdl/riscv_decode.sv				\
+		hdl/pipeline.sv					\
+		hdl/riscv_memory_iface.sv		\
 		hdl/riscv_regfile.sv			\
 		hdl/riscv_core.sv
 	vvp vcd/riscv_core.out

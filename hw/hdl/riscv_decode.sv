@@ -206,6 +206,19 @@ module riscv_decode(
                 dmem_read_enable_out = `OFF;
                 dmem_write_enable_out = `OFF;
             end
+            default: begin
+                imm_out = `ZERO;
+                br_func_out = `BR_FUNC_NONE;
+                pc_sel_out = `PC_SEL_NEXTPC;
+                op1_sel_out = `OP1_RS1;
+                op2_sel_out = `OP2_RS2;
+                writeback_sel_out = `WRITEBACK_X;
+                alu_func_out = `ALU_FUNC_NONE;
+                write_enable_rf_out = `OFF;
+                dmem_size_out = `MASK_NONE;
+                dmem_read_enable_out = `OFF;
+                dmem_write_enable_out = `OFF;
+            end
         endcase
     end
 endmodule
