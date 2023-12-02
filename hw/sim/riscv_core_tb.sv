@@ -34,10 +34,10 @@ module riscv_core_tb;
         INSTRUCTIONS[ 0] = 32'h000cb197;     // auipc x3, 203
         INSTRUCTIONS[ 1] = 32'h00013237;     // lui x4, 19
 
-        INSTRUCTIONS[ 2] = 32'hff1fff6f;     // jal x30, -16
-        INSTRUCTIONS[ 3] = 32'hff0207e7;     // jalr x15, -16(x4)
+        INSTRUCTIONS[ 2] = 32'hff1fff6f;     // jal x30, -16            JUMP TO -16d
+        INSTRUCTIONS[ 3] = 32'hff0207e7;     // jalr x15, -16(x4)       JUMP TO -8d
 
-        INSTRUCTIONS[ 4] = 32'h00208763;     // beq x1, x2, 14
+        INSTRUCTIONS[ 4] = 32'h00208763;     // beq x1, x2, 14          JUMP TO 1Eh
         INSTRUCTIONS[ 5] = 32'h00209763;     // bne x1, x2, 14
         INSTRUCTIONS[ 6] = 32'h0020c763;     // blt x1, x2, 14
         INSTRUCTIONS[ 7] = 32'h0020d763;     // bge x1, x2, 14

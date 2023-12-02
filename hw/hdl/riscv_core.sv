@@ -68,49 +68,7 @@ module riscv_core (
     MemoryState             MEM;
     WritebackState          WB1, WB2;
 
-    //////////////////////////////////////////////////////////////////////
-    //
-    // INSTRUCTION FETCH (IF)
-    //
-    //////////////////////////////////////////////////////////////////////
-
-    assign imem_addr_out = PC[31:2];
-
-    always_ff @(posedge clk_in) begin
-        if (rst_in) begin
-            PC <= 0;
-        end else begin
-            // TODO(kosinw): Check for stall / annulment before updating this
-            PC <= PC + 4;
-        end
-    end
-
-    //////////////////////////////////////////////////////////////////////
-    //
-    // INSTRUCTION DECODE (ID)
-    //
-    //////////////////////////////////////////////////////////////////////
-
-    // InstructionDecodeState d;
-
-    // always_comb begin
-    //     d = ID;
-
-    //     // TODO(kosinw): Check for stall / annulment before updating this
-    //     d.pc = PC;
-    //     d.instr = imem_data_in;
-    // end
-
-    always_ff @(posedge clk_in) begin
-        if (rst_in) begin
-            ID <= '0;
-        end else begin
-            // TODO(kosinw): Check for stall / annulment before updating this
-            ID.pc <= PC;
-            ID.instr <= imem_data_in;
-        end
-    end
-
+    // ID stage combinational signals
     logic [4:0] id_rs1, id_rs2, id_rd;
     logic [31:0] id_rd1, id_rd2;
     logic [31:0] id_imm;
@@ -124,33 +82,66 @@ module riscv_core (
     logic id_dmem_read_enable;
     logic id_dmem_write_enable;
 
+    // EX stage combinational signals
+    logic [31:0] ex_alu_result;
+    logic ex_br_taken;
+
+    //////////////////////////////////////////////////////////////////////
+    //
+    // INSTRUCTION FETCH (IF)
+    //
+    //////////////////////////////////////////////////////////////////////
+
+    assign imem_addr_out = PC[31:2];
+
+    always_ff @(posedge clk_in) begin
+        if (rst_in) begin
+            PC <= 0;
+        end else begin
+            // TODO(kosinw): Check for stall / annulment before updating this
+            case (EX.pc_sel)
+                `PC_SEL_NEXTPC:     PC <= PC + 4;
+                `PC_SEL_BRJMP:      PC <= (ex_br_taken) ? EX.br_target : PC + 4;
+                `PC_SEL_ALU:        PC <= ex_alu_result;
+                default:            PC <= PC + 4;
+            endcase
+        end
+    end
+
+    //////////////////////////////////////////////////////////////////////
+    //
+    // INSTRUCTION DECODE (ID)
+    //
+    //////////////////////////////////////////////////////////////////////
+
+    always_ff @(posedge clk_in) begin
+        if (rst_in) begin
+            ID <= '0;
+        end else begin
+            // TODO(kosinw): Check for stall / annulment before updating this
+            ID.pc <= PC;
+            ID.instr <= imem_data_in;
+        end
+    end
+
+    // logic [4:0] id_rs1, id_rs2, id_rd;
+    // logic [31:0] id_rd1, id_rd2;
+    // logic [31:0] id_imm;
+    // logic [2:0] id_br_func;
+    // logic [1:0] id_pc_sel;
+    // logic id_op1_sel, id_op2_sel;
+    // logic [1:0] id_wb_sel;
+    // logic [3:0] id_alu_func;
+    // logic id_we_rf;
+    // logic [2:0] id_dmem_size;
+    // logic id_dmem_read_enable;
+    // logic id_dmem_write_enable;
+
     //////////////////////////////////////////////////////////////////////
     //
     // EXECUTE (EX)
     //
     //////////////////////////////////////////////////////////////////////
-
-
-    // always_comb begin
-    //     ExecuteState x;
-    //     x = EX;
-
-    //     // TODO(kosinw): Check for stall / annulment before updating this
-    //     x.pc        = ID.pc;
-    //     x.br_target = id_imm + ID.pc; // TODO(kosinw): Maybe this isn't best place to do it in
-    //     x.rd2       = id_rd2;
-    //     x.rd        = id_rd;
-    //     x.a         = (id_op1_sel === `OP1_RS1) ? id_rd1 : ID.pc;
-    //     x.b         = (id_op2_sel === `OP2_RS2) ? id_rd2 : id_imm;
-    //     x.br_func   = id_br_func;
-    //     x.alu_func  = id_alu_func;
-    //     x.pc_sel    = id_pc_sel;
-    //     x.wb_sel    = id_wb_sel;
-    //     x.werf      = id_we_rf;
-    //     x.dmem_size = id_dmem_size;
-    //     x.dmem_read_enable = id_dmem_read_enable;
-    //     x.dmem_write_enable = id_dmem_write_enable;
-    // end
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
@@ -174,8 +165,8 @@ module riscv_core (
         end
     end
 
-    logic [31:0] ex_alu_result;
-    logic ex_br_taken;
+    // logic [31:0] ex_alu_result;
+    // logic ex_br_taken;
 
     //////////////////////////////////////////////////////////////////////
     //
