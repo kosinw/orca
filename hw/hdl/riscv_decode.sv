@@ -31,14 +31,12 @@ module riscv_decode(
     assign rs1_out = inst_in[19:15];
     assign rs2_out = inst_in[24:20];
     assign rd_out = inst_in[11:7];
+    assign immI = {{21{inst_in[31]}},inst_in[30:25],inst_in[24:20]};
+    assign immS = {{21{inst_in[31]}},inst_in[30:25],inst_in[11:7]};
+    assign immB = {{20{inst_in[31]}},inst_in[7],inst_in[30:25],inst_in[11:8],1'b0};
+    assign immU = {{1{inst_in[31]}},inst_in[30:20],inst_in[19:12],12'b0};
+    assign immJ = {{12{inst_in[31]}},inst_in[19:12],inst_in[20],inst_in[30:25],inst_in[24:21],1'b0};
 
-    always_comb begin
-        immI = {{21{inst_in[31]}},inst_in[30:25],inst_in[24:20]};
-        immS = {{21{inst_in[31]}},inst_in[30:25],inst_in[11:7]};
-        immB = {{20{inst_in[31]}},inst_in[7],inst_in[30:25],inst_in[11:8],1'b0};
-        immU = {{1{inst_in[31]}},inst_in[30:20],inst_in[19:12],12'b0};
-        immJ = {{12{inst_in[31]}},inst_in[19:12],inst_in[20],inst_in[30:25],inst_in[24:21],1'b0};
-    end
 
     always_comb begin
         case (opcode)

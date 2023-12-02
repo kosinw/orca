@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+`define TESTBENCH
 `include "hdl/riscv_constants.sv"
 
 module riscv_core_tb;
