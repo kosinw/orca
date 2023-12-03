@@ -21,7 +21,7 @@ font:
 
 .PHONY: text
 text:
-	util/text_gen.py data/text_codepoint.mem data/text_attribute.mem
+	util/text_gen.py data/initial_video_bram.mem
 
 .PHONY: video_tb
 video_tb:
@@ -35,7 +35,7 @@ video_tb:
 		hdl/video_controller.sv					\
 		hdl/video_sig_gen.sv					\
 		hdl/xilinx_single_port_ram_read_first.v	\
-		hdl/xilinx_true_dual_port_read_first_2_clock_ram.v
+		hdl/xilinx_true_dual_port_read_first_byte_write_2_clock_ram.v
 	vvp vcd/video_controller.out
 	open vcd/video_controller.vcd
 

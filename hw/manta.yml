@@ -1,0 +1,11 @@
+---
+cores:
+  instruction_memory:
+    type: block_memory
+    width: 32
+    depth: 16384
+
+uart:
+  port: "/dev/cu.usbserial-8874292302160"
+  baudrate: 3000000
+  clock_freq: 100000000

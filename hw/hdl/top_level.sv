@@ -6,6 +6,8 @@ module top_level(
     input wire [15:0] sw,
     input wire [3:0] btn,
     input wire [2:0] pmodb,
+    input wire uart_rxd,
+    output logic uart_txd,
     output logic [15:0] led,
     output logic [2:0] hdmi_tx_p,           // hdmi output signals (blue, green, red)
     output logic [2:0] hdmi_tx_n,           // hdmi output signals (negatives)
@@ -62,44 +64,29 @@ module top_level(
         .clk_ref(clk_100mhz)
     );
 
-    // TODO(kosinw): Remove me, just for testing keyboard logic
-    // logic [7:0] mkb_scancode;
-    // logic mkb_valid;
-
-    // ps2_rx mkb (
-    //     .clk_in(clk_100mhz),
-    //     .rst_in(sys_rst),
-    //     .ps2_clk_in(pmodb[2]),
-    //     .ps2_data_in(pmodb[0]),
-    //     .valid_out(mkb_valid),
-    //     .error_out(),
-    //     .scancode_out(mkb_scancode)
-    // );
-
-    // logic [31:0] scancode_buffer;
-    // logic [6:0] ss_c;
-
-    // always_ff @(posedge clk_100mhz) begin
-    //     if (sys_rst) begin
-    //         scancode_buffer <= 32'h0;
-    //     end else begin
-    //         if (mkb_valid) begin
-    //             scancode_buffer <= {scancode_buffer[23:0],mkb_scancode};
-    //         end
-    //     end
-    // end
-
     logic [31:0] pc;
-    logic [6:0] ss_c;
+    logic [31:0] instr;
 
     riscv_core core (
         .clk_in(clk_100mhz),
         .rst_in(sys_rst),
-        .imem_data_in(32'h13),
+        .imem_data_in(instr),
         .imem_addr_out(pc),
         .dmem_addr_out(),
         .dmem_data_in(32'hDEADBEEF)
     );
+
+    manta imem (
+        .clk(clk_100mhz),
+        .rx(uart_rxd),
+        .tx(uart_txd),
+        .instruction_memory_clk(clk_100mhz),
+        .instruction_memory_addr(pc[15:2]),
+        .instruction_memory_dout(instr),
+        .instruction_memory_we(1'b0)
+    );
+
+    logic [6:0] ss_c;
 
     seven_segment_controller mssc (
         .clk_in(clk_100mhz),

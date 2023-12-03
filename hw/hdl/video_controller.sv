@@ -63,8 +63,7 @@ module video_controller(
     logic [7:0] mvb_code_point, mvb_attribute;
 
     video_bram#(
-        .TEXT_INIT_FILE(`FPATH(text_codepoint.mem)),
-        .ATTR_INIT_FILE(`FPATH(text_attribute.mem))
+        .INITIAL_VIDEO_BRAM(`FPATH(initial_video_bram.mem))
     ) mvb (
         .clk_hdmi_in(clk_hdmi_in),
         .rst_in(rst_in),

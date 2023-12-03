@@ -2,8 +2,7 @@
 `default_nettype none
 
 module video_bram#(
-    parameter TEXT_INIT_FILE = "",
-    parameter ATTR_INIT_FILE = ""
+    parameter INITIAL_VIDEO_BRAM = ""
 )
 (
     input wire clk_hdmi_in,
@@ -21,67 +20,50 @@ module video_bram#(
     logic [3:0] y_in;
 
     logic [12:0] frame_buffer_addr;
+    logic [31:0] douta;
+
+    logic even;
 
     assign x_in = hcount_in[2:0];
     assign y_in = vcount_in[3:0];
     assign frame_buffer_addr = (active_draw_in)?(160*vcount_in[9:4])+hcount_in[10:3]:0;
 
+    assign code_point_out = (even) ? douta[7:0] : douta[23:16];
+    assign attribute_out = (even) ? douta[15:8] : douta[31:24];
+
     pipeline#(
         .PIPELINE_STAGES(2),
-        .PIPELINE_WIDTH(8)
+        .PIPELINE_WIDTH(9)
     ) control_signal_pipeline (
         .clk_in(clk_hdmi_in),
         .rst_in(rst_in),
-        .signal_in({x_in,y_in,active_draw_in}),
-        .signal_out({x_out,y_out,valid_out})
+        .signal_in({x_in,y_in,active_draw_in,!frame_buffer_addr[0]}),
+        .signal_out({x_out,y_out,valid_out,even})
     );
 
-    xilinx_true_dual_port_read_first_2_clock_ram #(
-        .RAM_WIDTH(8),
-        .RAM_DEPTH(160*45),
-        .INIT_FILE(TEXT_INIT_FILE)
-    ) code_point_bram (
-        .addra(13'b0),
-        .clka(clk_hdmi_in), // change me
-        .wea(1'b0),
-        .dina(8'b0),
-        .ena(1'b0),
-        .regcea(1'b0),
-        .rsta(1'b0),
-        .douta(),
-
-        .addrb(frame_buffer_addr),
-        .dinb(8'b0),
+    xilinx_true_dual_port_read_first_byte_write_2_clock_ram #(
+        .NB_COL(4),                           // Specify number of columns (number of bytes)
+        .COL_WIDTH(8),                        // Specify column width (byte width, typically 8 or 9)
+        .RAM_DEPTH(80*45),                    // Specify RAM depth (number of entries)
+        .RAM_PERFORMANCE("HIGH_PERFORMANCE"), // Select "HIGH_PERFORMANCE" or "LOW_LATENCY"
+        .INIT_FILE(INITIAL_VIDEO_BRAM)        // Specify name/location of RAM initialization file if using one (leave blank if not)
+    ) bram (
+        .addra(frame_buffer_addr[12:1]),
+        .addrb(12'b0),
+        .dina(32'h0),
+        .dinb(32'h0),
+        .clka(clk_hdmi_in),
         .clkb(clk_hdmi_in),
-        .web(1'b0),
-        .enb(1'b1),
+        .wea(4'b0),
+        .web(4'b0),
+        .ena(1'b1),
+        .enb(1'b0),
+        .rsta(rst_in),
         .rstb(rst_in),
-        .regceb(1'b1),
-        .doutb(code_point_out)
-    );
-
-    xilinx_true_dual_port_read_first_2_clock_ram #(
-        .RAM_WIDTH(8),
-        .RAM_DEPTH(160*45),
-        .INIT_FILE(ATTR_INIT_FILE)
-    ) attribute_bram (
-        .addra(13'b0),
-        .clka(clk_hdmi_in), // change me
-        .wea(1'b0),
-        .dina(8'b0),
-        .ena(1'b0),
-        .regcea(1'b0),
-        .rsta(1'b0),
-        .douta(),
-
-        .addrb(frame_buffer_addr),
-        .dinb(8'b0),
-        .clkb(clk_hdmi_in),
-        .web(1'b0),
-        .enb(1'b1),
-        .rstb(rst_in),
-        .regceb(1'b1),
-        .doutb(attribute_out)
+        .regcea(1'b1),
+        .regceb(1'b0),
+        .douta(douta),
+        .doutb()
     );
 endmodule
 
