@@ -33,7 +33,7 @@ module riscv_memory_iface(
         .signal_out({cpu_read_addr,cpu_size_read,cpu_enable_read})
     );
 
-    assign mem_addr_out = {2'b0,cpu_addr_in[31:2]};
+    assign mem_addr_out = cpu_addr_in;
 
     always_comb begin
         if (cpu_write_enable_in) begin

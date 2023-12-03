@@ -16,7 +16,12 @@ module video_controller(
     output logic new_frame_out,
     output logic [7:0] red_out,
     output logic [7:0] green_out,
-    output logic [7:0] blue_out
+    output logic [7:0] blue_out,
+
+    input wire [31:0] cpu_addr_in,
+    input wire [31:0] cpu_data_in,
+    input wire [3:0] cpu_write_enable_in,
+    output logic [31:0] cpu_data_out
 );
     logic [10:0] hcount;
     logic [9:0] vcount;
@@ -74,7 +79,11 @@ module video_controller(
         .x_out(mvb_x),
         .y_out(mvb_y),
         .code_point_out(mvb_code_point),
-        .attribute_out(mvb_attribute)
+        .attribute_out(mvb_attribute),
+        .cpu_addr_in(cpu_addr_in),
+        .cpu_data_in(cpu_data_in),
+        .cpu_write_enable_in(cpu_write_enable_in),
+        .cpu_data_out(cpu_data_out)
     );
 
     logic mfb_valid, mfb_pixel;

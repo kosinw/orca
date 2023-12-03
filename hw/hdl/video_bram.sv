@@ -14,7 +14,12 @@ module video_bram#(
     output logic [2:0] x_out,
     output logic [3:0] y_out,
     output logic [7:0] code_point_out,
-    output logic [7:0] attribute_out
+    output logic [7:0] attribute_out,
+
+    input wire [31:0] cpu_addr_in,
+    input wire [31:0] cpu_data_in,
+    input wire [3:0] cpu_write_enable_in,
+    output logic [31:0] cpu_data_out
 );
     logic [2:0] x_in;
     logic [3:0] y_in;
@@ -49,21 +54,21 @@ module video_bram#(
         .INIT_FILE(INITIAL_VIDEO_BRAM)        // Specify name/location of RAM initialization file if using one (leave blank if not)
     ) bram (
         .addra(frame_buffer_addr[12:1]),
-        .addrb(12'b0),
+        .addrb(cpu_addr_in[11:0]),
         .dina(32'h0),
-        .dinb(32'h0),
+        .dinb(cpu_data_in),
         .clka(clk_hdmi_in),
         .clkb(clk_hdmi_in),
         .wea(4'b0),
-        .web(4'b0),
+        .web(cpu_write_enable_in),
         .ena(1'b1),
-        .enb(1'b0),
+        .enb(1'b1),
         .rsta(rst_in),
         .rstb(rst_in),
         .regcea(1'b1),
-        .regceb(1'b0),
+        .regceb(1'b1),
         .douta(douta),
-        .doutb()
+        .doutb(cpu_data_out)
     );
 endmodule
 

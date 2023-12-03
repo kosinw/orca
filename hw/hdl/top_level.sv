@@ -45,7 +45,14 @@ module top_level(
     logic video_vsync, video_hsync, video_active_draw, video_new_frame;
     logic [7:0] video_red, video_green, video_blue;
 
-    // riscv core
+    // cpu and data bus
+    logic [31:0] pc;
+    logic [31:0] instr;
+
+    logic [31:0] cpu_addr_out;
+    logic [31:0] cpu_data_out;
+    logic [3:0] cpu_write_enable_out;
+    logic [31:0] cpu_data_in;
 
     ////////////////////////////////////////////////////////////
     // BLOCKS
@@ -64,16 +71,15 @@ module top_level(
         .clk_ref(clk_100mhz)
     );
 
-    logic [31:0] pc;
-    logic [31:0] instr;
-
     riscv_core core (
         .clk_in(clk_100mhz),
-        .rst_in(sys_rst),
+        .rst_in(btn[1] || sys_rst),
         .imem_data_in(instr),
         .imem_addr_out(pc),
-        .dmem_addr_out(),
-        .dmem_data_in(32'hDEADBEEF)
+        .dmem_addr_out(cpu_addr_out),
+        .dmem_data_out(cpu_data_out),
+        .dmem_write_enable_out(cpu_write_enable_out),
+        .dmem_data_in(cpu_data_in)
     );
 
     manta imem (
@@ -84,6 +90,22 @@ module top_level(
         .instruction_memory_addr(pc[15:2]),
         .instruction_memory_dout(instr),
         .instruction_memory_we(1'b0)
+    );
+
+    video_controller mvc (
+        .clk_hdmi_in(clk_74mhz),
+        .rst_in(sys_rst),
+        .vsync_out(video_vsync),
+        .hsync_out(video_hsync),
+        .active_draw_out(video_active_draw),
+        .new_frame_out(video_new_frame),
+        .red_out(video_red),
+        .green_out(video_green),
+        .blue_out(video_blue),
+        .cpu_addr_in(cpu_addr_out),
+        .cpu_data_in(cpu_data_out),
+        .cpu_write_enable_in(cpu_write_enable_out),
+        .cpu_data_out()
     );
 
     logic [6:0] ss_c;
@@ -98,18 +120,6 @@ module top_level(
 
     assign ss0_c = ss_c;
     assign ss1_c = ss_c;
-
-    video_controller mvc (
-        .clk_hdmi_in(clk_74mhz),
-        .rst_in(sys_rst),
-        .vsync_out(video_vsync),
-        .hsync_out(video_hsync),
-        .active_draw_out(video_active_draw),
-        .new_frame_out(video_new_frame),
-        .red_out(video_red),
-        .green_out(video_green),
-        .blue_out(video_blue)
-    );
 
     tmds_encoder tmds_encoder_red (
         .clk_in(clk_74mhz),
