@@ -101,6 +101,7 @@ module riscv_decode(
                     `FUNCT3_BR_GE:  br_func_out = `BR_FUNC_GE;
                     `FUNCT3_BR_LTU: br_func_out = `BR_FUNC_LTU;
                     `FUNCT3_BR_GEU: br_func_out = `BR_FUNC_GEU;
+                    default:        br_func_out = `BR_FUNC_NONE;
                 endcase
                 pc_sel_out = `PC_SEL_BRJMP;
                 op1_sel_out = `OP1_RS1;

@@ -23,6 +23,7 @@ module attribute_brom(
             3'b111: begin red_out = bg_red; green_out = bg_green; blue_out = bg_blue; end
             3'b100: begin red_out = bg_red; green_out = bg_green; blue_out = bg_blue; end
             3'b101: begin red_out = fg_red; green_out = fg_green; blue_out = fg_blue; end
+            default: begin red_out = 0; green_out = 0; blue_out = 0; end
         endcase
     end
 

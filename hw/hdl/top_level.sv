@@ -91,26 +91,35 @@ module top_level(
     logic cpu_step;
     logic btn_db_out;
     logic btn2_press;
+    logic cpu_halt;
 
     debouncer#(
         .DEBOUNCE_TIME_NS(10_000)
     ) btn2_db (
-        .clk_in(clk_74mhz),
+        .clk_in(clk_100mhz),
         .rst_in(sys_rst),
         .dirty_in(btn[2]),
         .clean_out(btn_db_out)
     );
+    debouncer#(
+        .DEBOUNCE_TIME_NS(10_000)
+    ) sw15_halt (
+        .clk_in(clk_100mhz),
+        .rst_in(sys_rst),
+        .dirty_in(sw[15]),
+        .clean_out(cpu_halt)
+    );
 
     edge_detector btn2_det (
-        .clk_in(clk_74mhz),
+        .clk_in(clk_100mhz),
         .level_in(btn_db_out),
         .level_out(btn2_press)
     );
 
-    assign cpu_step = sw[15] ? btn2_press : 1'b1;
+    assign cpu_step = cpu_halt ? btn2_press : 1'b1;
 
     riscv_core core (
-        .clk_in(clk_74mhz),
+        .clk_in(clk_100mhz),
         .rst_in(btn[1] || sys_rst),
         .cpu_step_in(cpu_step),
         .imem_data_in(instr),
@@ -130,7 +139,7 @@ module top_level(
     ////////////////////////////////////////////////////////////
 
     memory_controller memory_ctrl (
-        .clk_cpu_in(clk_74mhz),
+        .clk_cpu_in(clk_100mhz),
         .rst_in(sys_rst),
 
         .cpu_addr_in(cpu_addr_out),
@@ -155,7 +164,7 @@ module top_level(
     );
 
     program_ram data_memory (
-        .clk_in(clk_74mhz),
+        .clk_in(clk_100mhz),
         .rst_in(sys_rst),
         .pc_in(pc),
         .instr_out(instr),
@@ -175,7 +184,7 @@ module top_level(
         .red_out(video_red),
         .green_out(video_green),
         .blue_out(video_blue),
-        .clk_cpu_in(clk_74mhz),
+        .clk_cpu_in(clk_100mhz),
         .cpu_addr_in(video_addr_in),
         .cpu_data_in(video_data_in),
         .cpu_write_enable_in(video_write_enable_in),
@@ -185,7 +194,7 @@ module top_level(
     logic [6:0] ss_c;
 
     seven_segment_controller mssc (
-        .clk_in(clk_74mhz),
+        .clk_in(clk_100mhz),
         .rst_in(sys_rst),
         .val_in(cpu_debug_out),
         .cat_out(ss_c),

@@ -88,6 +88,7 @@ module riscv_memory_iface(
                     endcase
                 end
                 default: begin
+                    mem_data_out = 32'h0;
                     mem_write_enable = 4'b0000;
                 end
             endcase
