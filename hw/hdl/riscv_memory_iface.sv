@@ -37,31 +37,59 @@ module riscv_memory_iface(
 
     always_comb begin
         if (cpu_write_enable_in) begin
-            mem_data_out = cpu_data_in;
-
+            // mem_data_out = cpu_data_in;
             case (cpu_size_in)
                 `MASK_B: begin
                     case (cpu_addr_in[1:0])
-                        2'b00:      mem_write_enable = 4'b0001;
-                        2'b01:      mem_write_enable = 4'b0010;
-                        2'b10:      mem_write_enable = 4'b0100;
-                        2'b11:      mem_write_enable = 4'b1000;
+                        2'b00: begin
+                            mem_data_out = {24'b0, cpu_data_in[7:0]};
+                            mem_write_enable = 4'b0001;
+                        end
+                        2'b01: begin
+                            mem_data_out = {16'b0, cpu_data_in[7:0], 8'b0};
+                            mem_write_enable = 4'b0010;
+                        end
+                        2'b10: begin
+                            mem_data_out = {8'b0, cpu_data_in[7:0], 16'b0};
+                            mem_write_enable = 4'b0100;
+                        end
+                        2'b11: begin
+                            mem_data_out = {cpu_data_in[7:0], 24'b0};
+                            mem_write_enable = 4'b1000;
+                        end
                     endcase
                 end
                 `MASK_H: begin
                     case (cpu_addr_in[1:0])
-                        2'b00:      mem_write_enable = 4'b0011;
-                        2'b10:      mem_write_enable = 4'b1100;
-                        default:    mem_write_enable = 4'b0000; // NOTE(kosinw): Cannot do unaligned memory writes
+                        2'b00: begin
+                            mem_data_out = {16'b0, cpu_data_in[15:0]};
+                            mem_write_enable = 4'b0011;
+                        end
+                        2'b10: begin
+                            mem_data_out = {cpu_data_in[15:0], 16'b0};
+                            mem_write_enable = 4'b1100;
+                        end
+                        default: begin
+                            mem_data_out = cpu_data_in;
+                            mem_write_enable = 4'b0000; // NOTE(kosinw): Cannot do unaligned memory writes
+                        end
                     endcase
                 end
                 `MASK_W: begin
                     case (cpu_addr_in[1:0])
-                        2'b00:      mem_write_enable = 4'b1111;
-                        default:    mem_write_enable = 4'b0000;
+                        2'b00: begin
+                            mem_data_out = cpu_data_in;
+                            mem_write_enable = 4'b1111;
+                        end
+                        default: begin
+                            mem_data_out = cpu_data_in;
+                            mem_write_enable = 4'b0000;
+                        end
                     endcase
                 end
-                default:            mem_write_enable = 4'b0000;
+                default: begin
+                    mem_write_enable = 4'b0000;
+                end
             endcase
         end else begin
             mem_data_out = 32'h0;

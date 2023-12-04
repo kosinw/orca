@@ -95,14 +95,14 @@ module top_level(
     debouncer#(
         .DEBOUNCE_TIME_NS(10_000)
     ) btn2_db (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_74mhz),
         .rst_in(sys_rst),
         .dirty_in(btn[2]),
         .clean_out(btn_db_out)
     );
 
     edge_detector btn2_det (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_74mhz),
         .level_in(btn_db_out),
         .level_out(btn2_press)
     );
@@ -110,7 +110,7 @@ module top_level(
     assign cpu_step = sw[15] ? btn2_press : 1'b1;
 
     riscv_core core (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_74mhz),
         .rst_in(btn[1] || sys_rst),
         .cpu_step_in(cpu_step),
         .imem_data_in(instr),
@@ -130,7 +130,7 @@ module top_level(
     ////////////////////////////////////////////////////////////
 
     memory_controller memory_ctrl (
-        .clk_cpu_in(clk_100mhz),
+        .clk_cpu_in(clk_74mhz),
         .rst_in(sys_rst),
 
         .cpu_addr_in(cpu_addr_out),
@@ -154,18 +154,8 @@ module top_level(
         .keyboard_data_in()
     );
 
-    // manta instruction_memory (
-    //     .clk(clk_100mhz),
-    //     .rx(uart_rxd),
-    //     .tx(uart_txd),
-    //     .instruction_memory_clk(clk_100mhz),
-    //     .instruction_memory_addr(pc[15:2]),
-    //     .instruction_memory_dout(instr),
-    //     .instruction_memory_we(1'b0)
-    // );
-
     program_ram data_memory (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_74mhz),
         .rst_in(sys_rst),
         .pc_in(pc),
         .instr_out(instr),
@@ -185,7 +175,7 @@ module top_level(
         .red_out(video_red),
         .green_out(video_green),
         .blue_out(video_blue),
-        .clk_cpu_in(clk_100mhz),
+        .clk_cpu_in(clk_74mhz),
         .cpu_addr_in(video_addr_in),
         .cpu_data_in(video_data_in),
         .cpu_write_enable_in(video_write_enable_in),
@@ -195,7 +185,7 @@ module top_level(
     logic [6:0] ss_c;
 
     seven_segment_controller mssc (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_74mhz),
         .rst_in(sys_rst),
         .val_in(cpu_debug_out),
         .cat_out(ss_c),

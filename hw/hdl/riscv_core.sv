@@ -194,6 +194,7 @@ module riscv_core (
             end
             3'b010:     debug_out = imem_data_in;
             3'b011:     debug_out = dmem_addr_out;
+            3'b100:     debug_out = {28'b0, dmem_write_enable_out};
             default:    debug_out = 32'hDEADBEEF;
         endcase
     end
