@@ -22,13 +22,18 @@ module riscv_core_tb;
         .clk_in(clk_in),
         .rst_in(rst_in),
 
+        .cpu_step_in(1'b1),
+
         .imem_data_in(imem_data_in),
         .imem_addr_out(imem_addr_out),
 
         .dmem_addr_out(dmem_addr_out),
         .dmem_data_out(dmem_data_out),
         .dmem_write_enable_out(dmem_write_enable_out),
-        .dmem_data_in(dmem_data_in)
+        .dmem_data_in(dmem_data_in),
+
+        .debug_in(8'b10000000),
+        .debug_out()
     );
 
     initial begin

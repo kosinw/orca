@@ -6,13 +6,18 @@ module riscv_core (
     input wire clk_in,
     input wire rst_in,
 
+    input wire cpu_step_in,
+
     input  wire  [31:0] imem_data_in,
     output logic [31:0] imem_addr_out,
 
     output logic [31:0] dmem_addr_out,
     output logic [31:0] dmem_data_out,
     output logic [3:0]  dmem_write_enable_out,
-    input  wire  [31:0] dmem_data_in
+    input  wire  [31:0] dmem_data_in,
+
+    input wire [7:0] debug_in,
+    output logic [31:0] debug_out
 );
     typedef struct packed {
         logic   [31:0]  pc;
@@ -83,6 +88,10 @@ module riscv_core (
     logic id_dmem_write_enable;
     logic [31:0] id_operand_a;
     logic [31:0] id_operand_b;
+
+    // debugging signals
+    logic [4:0] reg_debug_in;
+    logic [31:0] reg_debug_out;
 
     // EX stage combinational signals
     logic [31:0] ex_alu_result;
@@ -168,6 +177,25 @@ module riscv_core (
     assign DEBUG5_WB_PC = WB2.pc;
     assign DEBUG5_WB_WERF = WB2.werf;
 `endif // TESTBENCH
+
+
+    //////////////////////////////////////////////////////////////////////
+    //
+    // TOP LEVEL DEBUG
+    //
+    //////////////////////////////////////////////////////////////////////
+
+    always_comb begin
+        reg_debug_in = debug_in[4:0];
+        case (debug_in[7:6])
+            2'b00:  debug_out = PC;
+            2'b01: begin
+                debug_out = reg_debug_out;
+            end
+            2'b10:  debug_out = ID.instr;
+            2'b11:  debug_out = {30'b0, annul, stall};
+        endcase
+    end
 
     //////////////////////////////////////////////////////////////////////
     //
@@ -283,7 +311,7 @@ module riscv_core (
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             PC <= 0;
-        end else begin
+        end else if (cpu_step_in) begin
             if (annul) begin
                 case (EX.pc_sel)
                     `PC_SEL_BRJMP:  PC <= EX.br_target;
@@ -307,7 +335,7 @@ module riscv_core (
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             ID <= '0;
-        end else begin
+        end else if (cpu_step_in) begin
             if (annul) begin
                 ID.pc <= `ZERO;
                 ID.instr <= `NOP;
@@ -329,7 +357,7 @@ module riscv_core (
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             EX <= '0;
-        end else begin
+        end else if (cpu_step_in) begin
             if (annul || stall) begin
                 EX.pc           <= `ZERO;
                 EX.br_target    <= `ZERO;
@@ -373,7 +401,7 @@ module riscv_core (
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             MEM <= '0;
-        end else begin
+        end else if (cpu_step_in) begin
             MEM.pc <= EX.pc;
             MEM.rd <= EX.rd;
             MEM.alu_result <= ex_alu_result;
@@ -396,7 +424,7 @@ module riscv_core (
         if (rst_in) begin
             WB1 <= '0;
             WB2 <= '0;
-        end else begin
+        end else if (cpu_step_in) begin
             WB1.pc       <= MEM.pc;
             WB1.rd       <= MEM.rd;
             WB1.result   <= MEM.alu_result;
@@ -449,7 +477,9 @@ module riscv_core (
         .rd2_out(id_rd2),
         .rd_in(WB2.rd),
         .wd_in(wb_data),
-        .write_enable_in(WB2.werf)
+        .write_enable_in(WB2.werf),
+        .reg_debug_in(reg_debug_in),
+        .reg_debug_out(reg_debug_out)
     );
 
     riscv_alu alu (
