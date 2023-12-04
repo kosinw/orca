@@ -31,7 +31,9 @@ module top_level(
     // clock domains
     logic clk_74mhz, clk_371mhz;         // 74.25 MHz hdmi clock and 371.25 MHz
     logic clk_100mhz;
+    logic clk_50mhz;
     logic locked_unused;                 // locked signal (unused)
+    logic locked_unused2;
 
     // tmds
     logic [9:0] tmds_10b [0:2];     // output of TMDS encoder
@@ -81,6 +83,13 @@ module top_level(
         .clk_ref(clk_100mhz)
     );
 
+    cpu_clk_wiz cpucw (
+        .clk_out1(clk_50mhz),
+        .reset(0),
+        .locked(locked_unused2),
+        .clk_in1(clk_100mhz)
+    );
+
     ////////////////////////////////////////////////////////////
     //
     //  CPU
@@ -93,12 +102,10 @@ module top_level(
     logic btn2_press;
     logic cpu_halt;
 
-    debouncer#(
-        .DEBOUNCE_TIME_NS(10_000)
-    ) btn2_db (
+    debouncer btn2_db (
         .clk_in(clk_100mhz),
         .rst_in(sys_rst),
-        .dirty_in(btn[2]),
+        .dirty_in(btn[3]),
         .clean_out(btn_db_out)
     );
 
@@ -108,11 +115,11 @@ module top_level(
         .level_out(btn2_press)
     );
 
-    assign cpu_halt = sw[15];
+    assign cpu_halt = sw[14];
     assign cpu_step = cpu_halt ? btn2_press : 1'b1;
 
     riscv_core core (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .rst_in(btn[1] || sys_rst),
         .cpu_step_in(cpu_step),
         .imem_data_in(instr),
@@ -132,7 +139,7 @@ module top_level(
     ////////////////////////////////////////////////////////////
 
     memory_controller memory_ctrl (
-        .clk_cpu_in(clk_100mhz),
+        .clk_cpu_in(clk_50mhz),
         .rst_in(sys_rst),
 
         .cpu_addr_in(cpu_addr_out),
@@ -177,7 +184,7 @@ module top_level(
         .red_out(video_red),
         .green_out(video_green),
         .blue_out(video_blue),
-        .clk_cpu_in(clk_100mhz),
+        .clk_cpu_in(clk_50mhz),
         .cpu_addr_in(video_addr_in),
         .cpu_data_in(video_data_in),
         .cpu_write_enable_in(video_write_enable_in),
