@@ -3,7 +3,6 @@ import sys
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("usage: util/font_gen.py [input_filename] [output_filename]")
         exit()
 
     input_file = sys.argv[1]

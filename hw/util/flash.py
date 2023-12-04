@@ -4,17 +4,21 @@ from struct import unpack
 import sys
 import os
 
-input_file = sys.argv[1]
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        exit()
 
-m = Manta('manta.yml')
+    input_file = sys.argv[1]
 
-with open(input_file, 'rb') as f:
-    sz = os.path.getsize(input_file)
-    instrs = sz // 4
-    data = f.read()
-    addrs = list(range(0, instrs))
-    datas = [unpack('<I', data[i*4:(i+1)*4])[0] for i in range(0, instrs)]
-    print(addrs, datas)
+    m = Manta('manta.yml')
 
-    m.instruction_memory.write(addrs, datas)
-    print(m.instruction_memory.read(addrs))
+    with open(input_file, 'rb') as f:
+        sz = os.path.getsize(input_file)
+        instrs = sz // 4
+        data = f.read()
+        addrs = list(range(0, instrs))
+        datas = [unpack('<I', data[i*4:(i+1)*4])[0] for i in range(0, instrs)]
+        print(addrs, datas)
+
+        m.instruction_memory.write(addrs, datas)
+        print(m.instruction_memory.read(addrs))

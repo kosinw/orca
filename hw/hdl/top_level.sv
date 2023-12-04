@@ -19,10 +19,6 @@ module top_level(
     output logic [6:0] ss0_c,               // cathode control for upper 4 digits
     output logic [6:0] ss1_c                // cathode control for upper 4 digits
 );
-    ////////////////////////////////////////////////////////////
-    // DECLARATIONS
-    ////////////////////////////////////////////////////////////
-
     // turn off bright LEDs
     assign rgb1 = 0;
     assign rgb0 = 0;
@@ -45,17 +41,26 @@ module top_level(
     logic video_vsync, video_hsync, video_active_draw, video_new_frame;
     logic [7:0] video_red, video_green, video_blue;
 
-    // cpu and data bus
+    // cpu
     logic [31:0] pc;
     logic [31:0] instr;
 
+    // data bus
     logic [31:0] cpu_addr_out;
     logic [31:0] cpu_data_out;
-    logic [3:0] cpu_write_enable_out;
+    logic [3:0]  cpu_write_enable_out;
     logic [31:0] cpu_data_in;
+    logic [31:0] cpu_debug_out;
+
+    logic [31:0] video_addr_in;
+    logic [31:0] video_data_in;
+    logic [3:0]  video_write_enable_in;
+    logic [31:0] video_data_out;
 
     ////////////////////////////////////////////////////////////
-    // BLOCKS
+    //
+    //  CLOCK STUFF
+    //
     ////////////////////////////////////////////////////////////
 
     BUFG mbf (
@@ -71,18 +76,107 @@ module top_level(
         .clk_ref(clk_100mhz)
     );
 
+    ////////////////////////////////////////////////////////////
+    //
+    //  CPU
+    //
+    ////////////////////////////////////////////////////////////
+
+    // halting mode
+    logic cpu_step;
+    logic btn_db_out;
+    logic btn2_press;
+
+    debouncer btn2_press(
+        .clk_in(clk_100mhz),
+        .rst_in(sys_rst),
+        .dirty_in(btn[2]),
+        .clean_out(btn_db_out)
+    );
+
+    edge_detector btn2_det(
+        .clk_in(clk_100mhz),
+        .level_in(btn_db_out),
+        .level_out(btn2_press)
+    );
+
+    assign cpu_step = sw[15] ? btn2_press : 1'b1;
+
     riscv_core core (
         .clk_in(clk_100mhz),
         .rst_in(btn[1] || sys_rst),
+        .cpu_step_in(cpu_step)
         .imem_data_in(instr),
         .imem_addr_out(pc),
         .dmem_addr_out(cpu_addr_out),
         .dmem_data_out(cpu_data_out),
         .dmem_write_enable_out(cpu_write_enable_out),
-        .dmem_data_in(cpu_data_in)
+        .dmem_data_in(cpu_data_in),
+        .debug_in(sw[7:0]),
+        .debug_out(cpu_debug_out)
     );
 
-    manta imem (
+    ////////////////////////////////////////////////////////////
+    //
+    //  MEMORY + PERIPHERALS
+    //
+    ////////////////////////////////////////////////////////////
+
+    // module memory_controller(
+    //     input wire clk_cpu_in,
+    //     input wire rst_in,
+
+    //     // cpu port
+    //     input wire   [31:0] cpu_addr_in,
+    //     input wire   [31:0] cpu_data_in,
+    //     input wire   [3:0]  cpu_write_enable_in,
+    //     output logic [31:0] cpu_data_out,
+
+    //     // video memory port
+    //     output logic [31:0] video_addr_out,
+    //     output logic [31:0] video_data_out,
+    //     output logic [3:0]  video_write_enable_out,
+    //     input wire   [31:0] video_data_in,
+
+    //     // RAM port
+    //     output logic [31:0] ram_addr_out,
+    //     output logic [31:0] ram_data_out,
+    //     output logic [3:0]  ram_write_enable_out,
+    //     input wire   [31:0] ram_data_in,
+
+    //     // keyboard module port
+    //     output logic [31:0] keyboard_addr_out,
+    //     output logic [31:0] keyboard_data_out,
+    //     output logic [3:0]  keyboard_write_enable_out,
+    //     input wire   [31:0] keyboard_data_in
+    // );
+
+    memory_controller memory_ctrl (
+        .clk_cpu_in(clk_100mhz),
+        .rst_in(sys_rst),
+
+        .cpu_addr_in(cpu_addr_out),
+        .cpu_data_in(cpu_data_out),
+        .cpu_write_enable_in(cpu_write_enable_out),
+        .cpu_data_out(cpu_data_in),
+
+        .video_addr_out(video_addr_in),
+        .video_data_out(video_data_in),
+        .video_write_enable_out(video_write_enable_in),
+        .video_data_in(video_data_out),
+
+        .ram_addr_out(),
+        .ram_data_out(),
+        .ram_write_enable_out(),
+        .ram_data_in(),
+
+        .keyboard_addr_out(),
+        .keyboard_data_out(),
+        .keyboard_write_enable_out(),
+        .keyboard_data_in()
+    );
+
+    manta instruction_memory (
         .clk(clk_100mhz),
         .rx(uart_rxd),
         .tx(uart_txd),
@@ -102,10 +196,11 @@ module top_level(
         .red_out(video_red),
         .green_out(video_green),
         .blue_out(video_blue),
-        .cpu_addr_in(cpu_addr_out),
-        .cpu_data_in(cpu_data_out),
-        .cpu_write_enable_in(cpu_write_enable_out),
-        .cpu_data_out()
+        .clk_cpu_in(clk_100mhz),
+        .cpu_addr_in(video_addr_in),
+        .cpu_data_in(video_data_in),
+        .cpu_write_enable_in(video_write_enable_in),
+        .cpu_data_out(video_data_out)
     );
 
     logic [6:0] ss_c;
@@ -113,13 +208,19 @@ module top_level(
     seven_segment_controller mssc (
         .clk_in(clk_100mhz),
         .rst_in(sys_rst),
-        .val_in(pc),
+        .val_in(cpu_debug_out),
         .cat_out(ss_c),
         .an_out({ss0_an,ss1_an})
     );
 
     assign ss0_c = ss_c;
     assign ss1_c = ss_c;
+
+    ////////////////////////////////////////////////////////////
+    //
+    //  HDMI
+    //
+    ////////////////////////////////////////////////////////////
 
     tmds_encoder tmds_encoder_red (
         .clk_in(clk_74mhz),

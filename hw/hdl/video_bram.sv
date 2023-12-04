@@ -16,6 +16,7 @@ module video_bram#(
     output logic [7:0] code_point_out,
     output logic [7:0] attribute_out,
 
+    input wire clk_cpu_in,
     input wire [31:0] cpu_addr_in,
     input wire [31:0] cpu_data_in,
     input wire [3:0] cpu_write_enable_in,
@@ -28,6 +29,8 @@ module video_bram#(
     logic [31:0] douta;
 
     logic even;
+    logic [3:0] cpu_write_enable;
+    logic cpu_addr_in_range;
 
     assign x_in = hcount_in[2:0];
     assign y_in = vcount_in[3:0];
@@ -35,6 +38,8 @@ module video_bram#(
 
     assign code_point_out = (even) ? douta[7:0] : douta[23:16];
     assign attribute_out = (even) ? douta[15:8] : douta[31:24];
+    assign cpu_addr_in_range = (cpu_addr_in[19:16] === 4'h2);
+    assign cpu_write_enable = (cpu_addr_in_range) ? cpu_write_enable_in : 4'b0000;
 
     pipeline#(
         .PIPELINE_STAGES(2),
@@ -54,20 +59,21 @@ module video_bram#(
         .INIT_FILE(INITIAL_VIDEO_BRAM)        // Specify name/location of RAM initialization file if using one (leave blank if not)
     ) bram (
         .addra(frame_buffer_addr[12:1]),
-        .addrb(cpu_addr_in[11:0]),
         .dina(32'h0),
-        .dinb(cpu_data_in),
         .clka(clk_hdmi_in),
-        .clkb(clk_hdmi_in),
         .wea(4'b0),
-        .web(cpu_write_enable_in),
         .ena(1'b1),
-        .enb(1'b1),
         .rsta(rst_in),
-        .rstb(rst_in),
         .regcea(1'b1),
-        .regceb(1'b1),
         .douta(douta),
+
+        .addrb(cpu_addr_in[13:2]),
+        .dinb(cpu_data_in),
+        .clkb(clk_cpu_in),
+        .web(cpu_write_enable),
+        .enb(1'b1),
+        .rstb(rst_in),
+        .regceb(1'b1),
         .doutb(cpu_data_out)
     );
 endmodule

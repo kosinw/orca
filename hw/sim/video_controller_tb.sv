@@ -24,6 +24,7 @@ module video_controller_tb;
         .green_out(green),
         .blue_out(blue),
 
+        .clk_cpu_in(pixel_clk_in),
         .cpu_addr_in(cpu_addr_in),
         .cpu_data_in(cpu_data_in),
         .cpu_write_enable_in(cpu_write_enable_in),

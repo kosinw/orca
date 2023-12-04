@@ -18,6 +18,7 @@ module video_controller(
     output logic [7:0] green_out,
     output logic [7:0] blue_out,
 
+    input wire clk_cpu_in,
     input wire [31:0] cpu_addr_in,
     input wire [31:0] cpu_data_in,
     input wire [3:0] cpu_write_enable_in,
@@ -80,6 +81,7 @@ module video_controller(
         .y_out(mvb_y),
         .code_point_out(mvb_code_point),
         .attribute_out(mvb_attribute),
+        .clk_cpu_in(clk_cpu_in),
         .cpu_addr_in(cpu_addr_in),
         .cpu_data_in(cpu_data_in),
         .cpu_write_enable_in(cpu_write_enable_in),

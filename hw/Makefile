@@ -17,11 +17,15 @@ build:
 
 .PHONY: font
 font:
-	util/font_gen.py util/ibm-vga-8x16.fnt data/font.mem
+	util/font.py util/ibm-vga-8x16.fnt data/font.mem
 
 .PHONY: text
 text:
-	util/text_gen.py data/initial_video_bram.mem
+	util/text.py data/initial_video_bram.mem
+
+.PHONY: sw
+sw:
+	util/flash.py util/program.bin
 
 .PHONY: video_tb
 video_tb:

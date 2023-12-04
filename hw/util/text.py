@@ -7,7 +7,6 @@ attributes = [["00" for _ in range(160)] for _ in range(45)]
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("usage: util/text_gen.py [initial_video_file]")
         exit()
 
     file = sys.argv[1]
