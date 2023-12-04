@@ -34,6 +34,5 @@ _start:
     li x1, 'D'
     addi x2, x2, 2
     sb x1, 0(x2)
-    j _start
-    nop
-    nop
+halt:
+    j halt

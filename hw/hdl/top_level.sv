@@ -101,14 +101,6 @@ module top_level(
         .dirty_in(btn[2]),
         .clean_out(btn_db_out)
     );
-    debouncer#(
-        .DEBOUNCE_TIME_NS(10_000)
-    ) sw15_halt (
-        .clk_in(clk_100mhz),
-        .rst_in(sys_rst),
-        .dirty_in(sw[15]),
-        .clean_out(cpu_halt)
-    );
 
     edge_detector btn2_det (
         .clk_in(clk_100mhz),
@@ -116,6 +108,7 @@ module top_level(
         .level_out(btn2_press)
     );
 
+    assign cpu_halt = sw[15];
     assign cpu_step = cpu_halt ? btn2_press : 1'b1;
 
     riscv_core core (
