@@ -57,6 +57,11 @@ module top_level(
     logic [3:0]  video_write_enable_in;
     logic [31:0] video_data_out;
 
+    logic [31:0] ram_addr_in;
+    logic [31:0] ram_data_in;
+    logic [3:0]  ram_write_enable_in;
+    logic [31:0] ram_data_out;
+
     ////////////////////////////////////////////////////////////
     //
     //  CLOCK STUFF
@@ -87,14 +92,14 @@ module top_level(
     logic btn_db_out;
     logic btn2_press;
 
-    debouncer btn2_press(
+    debouncer btn2_db (
         .clk_in(clk_100mhz),
         .rst_in(sys_rst),
         .dirty_in(btn[2]),
         .clean_out(btn_db_out)
     );
 
-    edge_detector btn2_det(
+    edge_detector btn2_det (
         .clk_in(clk_100mhz),
         .level_in(btn_db_out),
         .level_out(btn2_press)
@@ -105,7 +110,7 @@ module top_level(
     riscv_core core (
         .clk_in(clk_100mhz),
         .rst_in(btn[1] || sys_rst),
-        .cpu_step_in(cpu_step)
+        .cpu_step_in(cpu_step),
         .imem_data_in(instr),
         .imem_addr_out(pc),
         .dmem_addr_out(cpu_addr_out),
@@ -122,35 +127,6 @@ module top_level(
     //
     ////////////////////////////////////////////////////////////
 
-    // module memory_controller(
-    //     input wire clk_cpu_in,
-    //     input wire rst_in,
-
-    //     // cpu port
-    //     input wire   [31:0] cpu_addr_in,
-    //     input wire   [31:0] cpu_data_in,
-    //     input wire   [3:0]  cpu_write_enable_in,
-    //     output logic [31:0] cpu_data_out,
-
-    //     // video memory port
-    //     output logic [31:0] video_addr_out,
-    //     output logic [31:0] video_data_out,
-    //     output logic [3:0]  video_write_enable_out,
-    //     input wire   [31:0] video_data_in,
-
-    //     // RAM port
-    //     output logic [31:0] ram_addr_out,
-    //     output logic [31:0] ram_data_out,
-    //     output logic [3:0]  ram_write_enable_out,
-    //     input wire   [31:0] ram_data_in,
-
-    //     // keyboard module port
-    //     output logic [31:0] keyboard_addr_out,
-    //     output logic [31:0] keyboard_data_out,
-    //     output logic [3:0]  keyboard_write_enable_out,
-    //     input wire   [31:0] keyboard_data_in
-    // );
-
     memory_controller memory_ctrl (
         .clk_cpu_in(clk_100mhz),
         .rst_in(sys_rst),
@@ -165,10 +141,10 @@ module top_level(
         .video_write_enable_out(video_write_enable_in),
         .video_data_in(video_data_out),
 
-        .ram_addr_out(),
-        .ram_data_out(),
-        .ram_write_enable_out(),
-        .ram_data_in(),
+        .ram_addr_out(ram_addr_in),
+        .ram_data_out(ram_data_in),
+        .ram_write_enable_out(ram_write_enable_in),
+        .ram_data_in(ram_data_out),
 
         .keyboard_addr_out(),
         .keyboard_data_out(),
@@ -184,6 +160,15 @@ module top_level(
         .instruction_memory_addr(pc[15:2]),
         .instruction_memory_dout(instr),
         .instruction_memory_we(1'b0)
+    );
+
+    program_ram data_memory (
+        .clk_in(clk_100mhz),
+        .rst_in(sys_rst),
+        .cpu_addr_in(ram_addr_in),
+        .cpu_data_in(ram_data_in),
+        .cpu_write_enable_in(ram_write_enable_in),
+        .cpu_data_out(ram_data_out)
     );
 
     video_controller mvc (

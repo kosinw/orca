@@ -14,8 +14,17 @@ if __name__ == "__main__":
     for r in range(45):
         for c in range(160):
             character = bytes([((r*160)+c)%256]).hex()
-            codepoints[r][c] = f"{character}"
+            codepoints[r][c] = "00"
             attributes[r][c] = "4f"
+
+    # text = "HELLO, WORLD!"
+
+    # for i in range(len(text)):
+    #     r = i // 160
+    #     c = i % 160
+
+    #     codepoints[r][c] = f"{ord(text[i]):x}"
+    #     attributes[r][c] = "0f"
 
     with open(file, 'w') as f:
         for r in range(len(codepoints)):
