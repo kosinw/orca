@@ -35,3 +35,5 @@ _start:
     addi x2, x2, 2
     sb x1, 0(x2)
     j _start
+    nop
+    nop

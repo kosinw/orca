@@ -92,7 +92,9 @@ module top_level(
     logic btn_db_out;
     logic btn2_press;
 
-    debouncer btn2_db (
+    debouncer#(
+        .DEBOUNCE_TIME_NS(10_000)
+    ) btn2_db (
         .clk_in(clk_100mhz),
         .rst_in(sys_rst),
         .dirty_in(btn[2]),
@@ -152,19 +154,21 @@ module top_level(
         .keyboard_data_in()
     );
 
-    manta instruction_memory (
-        .clk(clk_100mhz),
-        .rx(uart_rxd),
-        .tx(uart_txd),
-        .instruction_memory_clk(clk_100mhz),
-        .instruction_memory_addr(pc[15:2]),
-        .instruction_memory_dout(instr),
-        .instruction_memory_we(1'b0)
-    );
+    // manta instruction_memory (
+    //     .clk(clk_100mhz),
+    //     .rx(uart_rxd),
+    //     .tx(uart_txd),
+    //     .instruction_memory_clk(clk_100mhz),
+    //     .instruction_memory_addr(pc[15:2]),
+    //     .instruction_memory_dout(instr),
+    //     .instruction_memory_we(1'b0)
+    // );
 
     program_ram data_memory (
         .clk_in(clk_100mhz),
         .rst_in(sys_rst),
+        .pc_in(pc),
+        .instr_out(instr),
         .cpu_addr_in(ram_addr_in),
         .cpu_data_in(ram_data_in),
         .cpu_write_enable_in(ram_write_enable_in),

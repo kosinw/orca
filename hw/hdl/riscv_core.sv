@@ -187,13 +187,14 @@ module riscv_core (
 
     always_comb begin
         reg_debug_in = debug_in[4:0];
-        case (debug_in[7:6])
-            2'b00:  debug_out = PC;
-            2'b01: begin
+        case (debug_in[7:5])
+            3'b000:     debug_out = imem_addr_out;
+            3'b001: begin
                 debug_out = reg_debug_out;
             end
-            2'b10:  debug_out = ID.instr;
-            2'b11:  debug_out = {30'b0, annul, stall};
+            3'b010:     debug_out = imem_data_in;
+            3'b011:     debug_out = dmem_addr_out;
+            default:    debug_out = 32'hDEADBEEF;
         endcase
     end
 

@@ -25,7 +25,7 @@ text:
 
 .PHONY: sw
 sw:
-	util/flash.py util/program.bin
+	util/program.py util/program.bin data/program.mem
 
 .PHONY: video_tb
 video_tb:
