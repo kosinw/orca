@@ -1,11 +1,10 @@
+ENTRY(_start)
+
 MEMORY
 {
-  rom (r) : ORIGIN = 0x00000000, LENGTH = 0x00020000
-  ram (rw) : ORIGIN = 0x00000000, LENGTH = 0x00020000
-  video_ram (rw) : ORIGIN = 0x00020000, LENGTH = 0x00010000
+  rom (r) : ORIGIN = 0x00000000,   LENGTH = 0x00020000
+  ram (rw) : ORIGIN = 0x00000000,  LENGTH = 0x00020000
 }
-
-ENTRY(_start)
 
 SECTIONS
 {
@@ -27,13 +26,14 @@ SECTIONS
   .data :
   {
     *(.data)
+    *(COMMON)
   } > ram
   . = ALIGN(32);
-
-  . = 0x00020000;
-  PROVIDE(. = __stack0);
 
     /DISCARD/ : {
         *(.riscv.attributes)
     }
+
+  . = 0x00020000;
+  PROVIDE(__stack0 = .);
 }

@@ -6,6 +6,6 @@ cores:
     depth: 16384
 
 uart:
-  port: "/dev/cu.usbserial-8874292302161"
+  port: "auto"
   baudrate: 3000000
   clock_freq: 100000000

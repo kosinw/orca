@@ -23,7 +23,7 @@ all: $(BINFILES)
 # Compilation rule for .bin files
 build/%.bin: build/%.o linker.ld
 	mkdir -p "$$(dirname $@)"
-	$(CC) -march=rv32i -mabi=ilp32 -ffreestanding -O2 -nostdlib -Tlinker.ld -o $@.elf $<
+	$(CC) -s -march=rv32i -mabi=ilp32 -ffreestanding -O2 -nostdlib -Tlinker.ld -o $@.elf $<
 	$(OBJCOPY) -O binary -I elf32-littleriscv $@.elf $@
 	$(OBJDUMP) -D $@.elf -M numeric > $@.S
 	rm -f build/temp

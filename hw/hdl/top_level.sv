@@ -171,7 +171,8 @@ module top_level(
         .cpu_addr_in(ram_addr_in),
         .cpu_data_in(ram_data_in),
         .cpu_write_enable_in(ram_write_enable_in),
-        .cpu_data_out(ram_data_out)
+        .cpu_data_out(ram_data_out),
+        .uart_rx_in(uart_rxd)
     );
 
     video_controller mvc (
