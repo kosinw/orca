@@ -138,8 +138,8 @@ module ram_bridge_rx (
             if (byte_num == 8) begin
                 state <= IDLE;
 
-                addr_out <= {buffer[0],buffer[1],buffer[2],buffer[3]};
-                data_out <= {buffer[4],buffer[5],buffer[6],buffer[7]};
+                addr_out <= {buffer[3],buffer[2],buffer[1],buffer[0]};
+                data_out <= {buffer[7],buffer[6],buffer[5],buffer[4]};
                 valid_out <= 1'b1;
             end
         end

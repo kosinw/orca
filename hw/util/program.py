@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from manta import Manta
 from struct import unpack
 import sys
 import os

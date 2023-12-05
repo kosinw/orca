@@ -1,0 +1,6 @@
+mantaray @ git+https://github.com/fischermoseley/manta.git@a1130e842478ad53696e4c46d0fe1094c8c1a957
+Pillow==10.0.1
+pyserial==3.5
+pyvcd==0.4.0
+PyYAML==6.0.1
+scapy==2.5.0

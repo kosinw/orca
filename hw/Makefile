@@ -8,7 +8,7 @@ SOURCES := 										\
 	build.tcl									\
 
 .PHONY: all
-all: font text sw build flash
+all: build flash
 
 .PHONY: flash
 flash:
@@ -20,15 +20,15 @@ build:
 
 .PHONY: font
 font:
-	util/font.py util/ibm-vga-8x16.fnt data/font.mem
+	util/font.py data/ibm-vga-8x16.fnt data/font.mem
 
 .PHONY: text
 text:
 	util/text.py data/initial_video_bram.mem
 
-.PHONY: sw
-sw:
-	util/program.py util/program.bin data/program.mem
+.PHONY: program
+program:
+	util/program.py data/program.bin data/program.mem
 
 .PHONY: video_tb
 video_tb:
