@@ -29,4 +29,11 @@ SECTIONS
     *(.data)
   } > ram
   . = ALIGN(32);
+
+  . = 0x00020000;
+  PROVIDE(. = __stack0);
+
+    /DISCARD/ : {
+        *(.riscv.attributes)
+    }
 }

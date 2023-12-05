@@ -7,6 +7,9 @@ SOURCES := 										\
 	data/										\
 	build.tcl									\
 
+.PHONY: all
+all: font text sw build flash
+
 .PHONY: flash
 flash:
 	openFPGALoader -b arty_s7_50 obj/final.bit
