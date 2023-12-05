@@ -29,7 +29,7 @@ module program_ram (
     logic [31:0] brx_mem_data;
     logic brx_mem_valid;
 
-    assign cpu_addr_in_range = (cpu_addr_in[19:16] === 4'h2);
+    assign cpu_addr_in_range = (cpu_addr_in[19:16] < 4'h2);
     assign cpu_write_enable = (cpu_addr_in_range) ? cpu_write_enable_in : 4'b0000;
 
     uart_rx #(.CLOCKS_PER_BAUD(33)) urx (
@@ -73,11 +73,10 @@ module program_ram (
     );
 
     xilinx_true_dual_port_read_first_byte_write_2_clock_ram #(
-        .NB_COL(4),                           // Specify number of columns (number of bytes)
-        .COL_WIDTH(8),                        // Specify column width (byte width, typically 8 or 9)
-        .RAM_DEPTH(16384),                    // Specify RAM depth (number of entries)
-        .RAM_PERFORMANCE("HIGH_PERFORMANCE"), // Select "HIGH_PERFORMANCE" or "LOW_LATENCY"
-        .INIT_FILE(`FPATH(program.mem))
+        .NB_COL(4),
+        .COL_WIDTH(8),
+        .RAM_DEPTH(16384),
+        .RAM_PERFORMANCE("HIGH_PERFORMANCE")
     ) dmem (
         .addra(brx_mem_addr[11:0]),
         .dina(brx_mem_data),
@@ -106,7 +105,7 @@ module ram_bridge_rx (
     input wire valid_in,
 
     output logic [31:0] addr_out,
-    output logic [31:0] data_out
+    output logic [31:0] data_out,
     output logic valid_out
 );
     initial addr_out = 0;

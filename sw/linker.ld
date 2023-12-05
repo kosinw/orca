@@ -1,37 +1,37 @@
 ENTRY(_start)
 
-MEMORY
-{
-  rom (r) : ORIGIN = 0x00000000,   LENGTH = 0x00020000
-  ram (rw) : ORIGIN = 0x00000000,  LENGTH = 0x00020000
-}
-
 SECTIONS
 {
   . = 0x00000000;
   .text :
   {
     /* Your program code goes here */
+    *(.text.boot)
     *(.text)
-  } > rom
+  }
   . = ALIGN(32);
 
   .bss :
   {
     /* Uninitialized data goes here */
     *(.bss)
-  } > ram
+  }
   . = ALIGN(32);
 
   .data :
   {
+    *(.rodata)
     *(.data)
+    *(.sdata)
     *(COMMON)
-  } > ram
+  }
   . = ALIGN(32);
 
     /DISCARD/ : {
         *(.riscv.attributes)
+        *(.eh_frame_hdr)
+        *(.eh_frame)
+        *(.comment)
     }
 
   . = 0x00020000;
