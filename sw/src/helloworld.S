@@ -1,6 +1,7 @@
 .globl _start
 
 _start:
+    nop
     li x1, 'H'
     li x2, 0x20000
     sb x1, 0(x2)

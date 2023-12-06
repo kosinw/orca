@@ -1,6 +1,7 @@
 .text
 .globl _start
 _start:
+    nop
     la      a0, hello_world
     la      a1, 0x20000
 
@@ -9,7 +10,7 @@ copy_loop:
     beqz    t0, done
     sb      t0, 0(a1)
     addi    a0, a0, 1
-    addi    a1, a1, 1
+    addi    a1, a1, 2
     j       copy_loop
 
 done:
