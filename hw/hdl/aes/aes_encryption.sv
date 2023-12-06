@@ -1,26 +1,6 @@
+`timescale 1ns / 1ps 
 `default_nettype none
-
-typedef enum logic [3:0] {
-  ROUND_INIT,
-  ROUND_1,
-  ROUND_2,
-  ROUND_3,
-  ROUND_4,
-  ROUND_5,
-  ROUND_6,
-  ROUND_7,
-  ROUND_8,
-  ROUND_9,
-  ROUND_10
-} Round;
-
-typedef enum logic [2:0] {
-  IDLE,
-  SubBytes,
-  ShiftRows,
-  MixColumns,
-  AddRoundKey
-} Stage;
+`include "hdl/aes/aes_defs.sv"
 
 module aes_encryption (
     // Default inputs
@@ -36,20 +16,24 @@ module aes_encryption (
     // Key input
     input wire [127:0] key_in,
 
+    input wire [3:0] round_in,
+
     // Data ouput 
+    output logic next_round_out,
     output logic [127:0] data_out,
     output logic valid_out
 );
-
   // Initialiez round for what round of the encryption it is currently in
-  Round round;
+  logic [3:0] round;
   // Initialize stage for which stage within a round it is in
-  Stage stage;
+  logic [2:0] stage;
+
+  assign round = round_in;
 
   // Initialize some temporary variables
   logic [127:0] temp_data, temp_subbytes_result;
   logic [31:0] temp_mc_result_0, temp_mc_result_1, temp_mc_result_2, temp_mc_result_3;
-  logic [127:0] round_key, temp_round_key;
+  // logic [127:0] round_key, temp_round_key;
 
   // Initialize cell values for data and mix columns matrix for processing
   logic [7:0] c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15;
@@ -63,11 +47,11 @@ module aes_encryption (
       .data_out(temp_subbytes_result)
   );
 
-  aes_key_schedule aes_key_schedule (
-      .round_in(round),
-      .key_in  (round_key),
-      .key_out (temp_round_key)
-  );
+  // aes_key_schedule aes_key_schedule (
+  //     .round_in(round),
+  //     .key_in  (round_key),
+  //     .key_out (temp_round_key)
+  // );
 
   /********************************************
   * Functions to handle mix columns operation * 
@@ -160,64 +144,67 @@ module aes_encryption (
 
   always_ff @(posedge clk_in) begin
     if (rst_in) begin
-      stage <= IDLE;
-      round <= ROUND_INIT;
-      round_key <= 128'h0;
+      stage <= `IDLE;
+      // round_key <= 128'h0;
+      next_round_out <= 1'b0;
     end else begin
       // Upon initializing encryption, set round stage to SubBytes
       if (init_in) begin
-        stage <= SubBytes;
+        stage <= `SUB_BYTES;
         encrypting <= 1'b1;
         temp_data <= data_in;
-        round_key <= key_in;
+        // round_key <= key_in;
         valid_out <= 1'b0;
       end else begin
         if (encrypting) begin
           case (round)
-            ROUND_INIT: begin
+            `ROUND_INIT: begin
               // original temp_data contains data_in
               // new temp_data contains data_in (XOR) round_key
-              temp_data <= temp_data ^ round_key;
-              round <= ROUND_1;
+              temp_data <= temp_data ^ key_in;
+              next_round_out <= 1'b1;
+              // round <= `ROUND_1;
             end
-            ROUND_1, ROUND_2, ROUND_3, ROUND_4, ROUND_5, ROUND_6, ROUND_7, ROUND_8, ROUND_9, ROUND_10: begin
+            `ROUND_1, `ROUND_2, `ROUND_3, `ROUND_4, `ROUND_5, `ROUND_6, `ROUND_7, `ROUND_8, `ROUND_9, `ROUND_10: begin
               case (stage)
-                SubBytes: begin
+                `SUB_BYTES: begin
                   // temp_subbytes_result should contain the subbytes from sbox
                   // new temp_data contains the subbytes result
                   temp_data <= temp_subbytes_result;
-                  stage <= ShiftRows;
+                  stage <= `SHIFT_ROWS;
+                  next_round_out <= 1'b0;
                 end
-                ShiftRows: begin
+                `SHIFT_ROWS: begin
                   temp_data <= {
                     c0, c1, c2, c3, c5, c6, c7, c4, c10, c11, c8, c9, c15, c12, c13, c14
                   };
-                  if (round == ROUND_10) begin
-                    stage <= AddRoundKey;
+                  if (round == `ROUND_10) begin
+                    stage <= `ADD_ROUND_KEY;
                   end else begin
-                    stage <= MixColumns;
+                    stage <= `MIX_COLUMNS;
                   end
                 end
-                MixColumns: begin
+                `MIX_COLUMNS: begin
                   temp_data <= {
                     m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15
                   };
-                  stage <= AddRoundKey;
+                  stage <= `ADD_ROUND_KEY;
                 end
-                AddRoundKey: begin
-                  temp_data <= temp_data ^ temp_round_key;
-                  round_key <= temp_round_key;
+                `ADD_ROUND_KEY: begin
+                  temp_data <= temp_data ^ key_in;
+                  // round_key <= temp_round_key;
                   // If we are at last round, reset round, stage
                   // Set valid_out flag to HIGH, set encrypting to LOW
-                  if (round == ROUND_10) begin
-                    round <= ROUND_INIT;
-                    stage <= IDLE;
+                  if (round == `ROUND_10) begin
+                    // round <= `ROUND_INIT;
+                    stage <= `IDLE;
                     valid_out <= 1'b1;
                     encrypting <= 1'b0;
                     // Otherwise, cycle again
                   end else begin
-                    stage <= SubBytes;
-                    round <= round + 1;
+                    stage <= `SUB_BYTES;
+                    next_round_out <= 1'b1;
+                    // round <= round + 1;
                   end
                 end
               endcase
