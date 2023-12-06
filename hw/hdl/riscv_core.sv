@@ -21,7 +21,6 @@ module riscv_core (
 );
     typedef struct packed {
         logic   [31:0]  pc;
-        logic   [31:0]  instr;
     } InstructionDecodeState;
 
     typedef struct packed {
@@ -67,7 +66,7 @@ module riscv_core (
     //  data memory read/write (no caching)
     //
 
-    logic [31:0]            PC;
+    logic [31:0]            PC0, PC;
     InstructionDecodeState  ID;
     ExecuteState            EX;
     MemoryState             MEM;
@@ -120,7 +119,7 @@ module riscv_core (
     logic annul;
 
     // probes for testbenching
-`ifdef TESTBENCH
+`ifndef TOPLEVEL
     logic           DEBUG0_STALL;
     logic           DEBUG0_BYPASS;
     logic           DEBUG0_ANNUL;
@@ -154,7 +153,7 @@ module riscv_core (
                            (raw_rs2_wb1 || raw_rs2_wb2);
     assign DEBUG0_ANNUL = annul;
     assign DEBUG0_IF_PC = PC;
-    assign DEBUG1_ID_INSTR = ID.instr;
+    assign DEBUG1_ID_INSTR = imem_data_in;
     assign DEBUG1_ID_RS1 = id_rs1;
     assign DEBUG1_ID_RS2 = id_rs2;
     assign DEBUG1_ID_RD  = id_rd;
@@ -176,7 +175,7 @@ module riscv_core (
     assign DEBUG5_WB_RESULT = WB2.result;
     assign DEBUG5_WB_PC = WB2.pc;
     assign DEBUG5_WB_WERF = WB2.werf;
-`endif // TESTBENCH
+`endif // TOPLEVEL
 
 
     //////////////////////////////////////////////////////////////////////
@@ -189,12 +188,11 @@ module riscv_core (
         reg_debug_in = debug_in[4:0];
         case (debug_in[7:5])
             3'b000:     debug_out = imem_addr_out;
-            3'b001: begin
-                debug_out = reg_debug_out;
-            end
+            3'b001:     debug_out = reg_debug_out;
             3'b010:     debug_out = imem_data_in;
             3'b011:     debug_out = dmem_addr_out;
             3'b100:     debug_out = {28'b0, dmem_write_enable_out};
+            3'b101:     debug_out = dmem_data_in;
             default:    debug_out = 32'hDEADBEEF;
         endcase
     end
@@ -205,8 +203,7 @@ module riscv_core (
     //
     //////////////////////////////////////////////////////////////////////
 
-    assign annul = (EX.pc_sel === `PC_SEL_BRJMP && ex_br_taken) ||
-                   (EX.pc_sel === `PC_SEL_ALU);
+    assign annul = (EX.pc_sel === `PC_SEL_BRJMP && ex_br_taken) || (EX.pc_sel === `PC_SEL_ALU);
 
     // Load-to-use hazard is active when:
     //  - The incident register cannot be x0
@@ -308,22 +305,26 @@ module riscv_core (
     //
     //////////////////////////////////////////////////////////////////////
 
-    assign imem_addr_out = PC;
+    assign imem_addr_out = PC0;
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
+            PC0 <= 0;
             PC <= 0;
         end else if (cpu_step_in) begin
             if (annul) begin
                 case (EX.pc_sel)
-                    `PC_SEL_BRJMP:  PC <= EX.br_target;
-                    `PC_SEL_ALU:    PC <= ex_alu_result;
-                    default:        PC <= PC + 4;
+                    `PC_SEL_BRJMP:  PC0 <= EX.br_target;
+                    `PC_SEL_ALU:    PC0 <= ex_alu_result;
+                    default:        PC0 <= PC0 + 4;
                 endcase
+                PC <= `ZERO;
             end else if (stall) begin
+                PC0 <= PC0;
                 PC <= PC;
             end else begin
-                PC <= PC + 4;
+                PC0 <= PC0 + 4;
+                PC <= PC0;
             end
         end
     end
@@ -340,12 +341,12 @@ module riscv_core (
         end else if (cpu_step_in) begin
             if (annul) begin
                 ID.pc <= `ZERO;
-                ID.instr <= `NOP;
+                // ID.instr <= `NOP;
             end else if (stall) begin
                 ID <= ID;
             end else begin
                 ID.pc <= PC;
-                ID.instr <= imem_data_in;
+                // ID.instr <= imem_data_in;
             end
         end
     end
@@ -453,7 +454,7 @@ module riscv_core (
     //////////////////////////////////////////////////////////////////////
 
     riscv_decode decoder (
-        .inst_in(ID.instr),
+        .inst_in(imem_data_in),
         .rs1_out(id_rs1),
         .rs2_out(id_rs2),
         .rd_out(id_rd),
@@ -495,6 +496,7 @@ module riscv_core (
 
     riscv_memory_iface dmem_iface (
         .clk_in(clk_in),
+        .step_in(cpu_step_in),
         .rst_in(rst_in),
 
         .cpu_addr_in(MEM.addr),

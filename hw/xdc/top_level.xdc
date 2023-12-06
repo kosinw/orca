@@ -137,4 +137,5 @@ set_property IOSTANDARD LVCMOS33 [ get_ports "uart*"]
 
 set_property BITSTREAM.CONFIG.UNUSEDPIN PULLUP [current_design]
 set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+set_property ram_decomp power [get_cells dmem]
 
