@@ -2,6 +2,7 @@
 import struct
 import sys
 import serial
+import time
 
 PORT = "/dev/cu.usbserial-8874292302161"
 BAUDRATE = 3000000
@@ -17,10 +18,16 @@ if __name__ == "__main__":
 
     chunks = [binary_data[i:i+4] for i in range(0, len(binary_data), 4)]
 
+    print(f"sending '{input_file}' to orca computer...")
+
     with serial.Serial(PORT, BAUDRATE) as uart:
         for i in range(len(chunks)):
-            addr = struct.pack("<I", i)
-            data = chunks[i]
-            uart.write(b"W")
-            uart.write(addr)
-            uart.write(data)
+            addr = struct.pack("<I", i*4)
+            data = chunks[i].ljust(4, b"\x00")
+            print(f"addr={addr[::-1].hex()},data={data[::-1].hex()}")
+            message = b"".join([b"W", addr, data, b"\r\n"])
+            uart.write(message)
+            time.sleep(0.01)
+
+
+    print("done!")

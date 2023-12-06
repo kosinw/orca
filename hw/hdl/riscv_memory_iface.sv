@@ -5,6 +5,7 @@
 
 module riscv_memory_iface(
     input wire clk_in,
+    input wire step_in,
     input wire rst_in,
 
     input wire [31:0] cpu_addr_in,
@@ -23,11 +24,12 @@ module riscv_memory_iface(
     logic cpu_enable_read;
     logic [31:0] cpu_read_addr;
 
-    pipeline#(
+    pipeline2#(
         .PIPELINE_STAGES(2),
         .PIPELINE_WIDTH(36)
     ) read_ctrl_pipeline (
         .clk_in(clk_in),
+        .step_in(step_in),
         .rst_in(rst_in),
         .signal_in({cpu_addr_in,cpu_size_in,cpu_read_enable_in}),
         .signal_out({cpu_read_addr,cpu_size_read,cpu_enable_read})

@@ -16,10 +16,12 @@ module program_ram (
     input wire [31:0] cpu_data_in,
     input wire [3:0] cpu_write_enable_in,
     output logic [31:0] cpu_data_out,
-    input wire uart_rx_in
+    input wire uart_rx_in,
+
+    output logic [31:0] debug_data_out,
+    output logic debug_valid_out
 );
     logic [3:0] cpu_write_enable;
-    logic [31:0] doutb;
     logic cpu_addr_in_range;
 
     logic [7:0] urx_brx_data;
@@ -29,10 +31,10 @@ module program_ram (
     logic [31:0] brx_mem_data;
     logic brx_mem_valid;
 
-    assign cpu_addr_in_range = (cpu_addr_in[19:16] < 4'h2);
+    assign cpu_addr_in_range = (cpu_addr_in < 32'h20000);
     assign cpu_write_enable = (cpu_addr_in_range) ? cpu_write_enable_in : 4'b0000;
 
-    uart_rx #(.CLOCKS_PER_BAUD(33)) urx (
+    uart_rx #(.CLOCKS_PER_BAUD(16)) urx (
         .clk(clk_in),
         .rx(uart_rx_in),
         .data_o(urx_brx_data),
@@ -42,18 +44,21 @@ module program_ram (
     ram_bridge_rx brx (
         .clk_in(clk_in),
         .data_in(urx_brx_data),
+        .valid_in(urx_brx_valid),
         .addr_out(brx_mem_addr),
         .data_out(brx_mem_data),
         .valid_out(brx_mem_valid)
     );
 
+    assign debug_valid_out = brx_mem_valid;
+    assign debug_data_out = brx_mem_data;
+
     xilinx_true_dual_port_read_first_2_clock_ram #(
         .RAM_WIDTH(32),
         .RAM_DEPTH(16384),
-        .RAM_PERFORMANCE("LOW_LATENCY"),
-        .INIT_FILE(`FPATH(program.mem))
+        .RAM_PERFORMANCE("HIGH_PERFORMANCE")
     ) imem (
-        .addra(pc_in[13:2]),
+        .addra(pc_in[15:2]),
         .dina(32'h0),
         .clka(clk_in),
         .wea(1'b0),
@@ -62,7 +67,7 @@ module program_ram (
         .regcea(1'b1),
         .douta(instr_out),
 
-        .addrb(brx_mem_addr[11:0]),
+        .addrb(brx_mem_addr[15:2]),
         .dinb(brx_mem_data),
         .clkb(clk_in),
         .web(brx_mem_valid),
@@ -78,7 +83,7 @@ module program_ram (
         .RAM_DEPTH(16384),
         .RAM_PERFORMANCE("HIGH_PERFORMANCE")
     ) dmem (
-        .addra(brx_mem_addr[11:0]),
+        .addra(brx_mem_addr[15:2]),
         .dina(brx_mem_data),
         .clka(clk_in),
         .wea({4{brx_mem_valid}}),
@@ -87,14 +92,14 @@ module program_ram (
         .regcea(1'b1),
         .douta(),
 
-        .addrb(cpu_addr_in[13:2]),
+        .addrb(cpu_addr_in[15:2]),
         .dinb(cpu_data_in),
         .clkb(clk_in),
         .web(cpu_write_enable),
         .enb(1'b1),
         .rstb(rst_in),
         .regceb(1'b1),
-        .doutb(doutb)
+        .doutb(cpu_data_out)
     );
 endmodule
 
@@ -121,18 +126,17 @@ module ram_bridge_rx (
     logic [3:0] byte_num;
 
     always_ff @(posedge clk_in) begin
-        addr_out <= 0;
-        data_out <= 0;
-        valid_out <= 0;
-
         if (state == IDLE) begin
+            addr_out <= 0;
+            data_out <= 0;
+            valid_out <= 0;
             byte_num <= 0;
             if (valid_in) begin
                 if (data_in == "W")     state <= WRITE;
             end
         end else if (valid_in) begin
-            byte_num <= byte_num + 1;
             buffer[byte_num] <= data_in;
+            byte_num <= byte_num + 1;
 
             if (byte_num == 8) begin
                 state <= IDLE;
@@ -140,6 +144,11 @@ module ram_bridge_rx (
                 addr_out <= {buffer[3],buffer[2],buffer[1],buffer[0]};
                 data_out <= {buffer[7],buffer[6],buffer[5],buffer[4]};
                 valid_out <= 1'b1;
+                byte_num <= 0;
+            end else begin
+                addr_out <= 0;
+                data_out <= 0;
+                valid_out <= 0;
             end
         end
     end

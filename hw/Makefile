@@ -5,7 +5,6 @@ SOURCES := 										\
 	sim/										\
 	ip/											\
 	data/										\
-	build.tcl									\
 
 .PHONY: all
 all: build flash
@@ -16,7 +15,18 @@ flash:
 
 .PHONY: build
 build:
-	./remote/r.py build.py $(SOURCES)
+	rm -f build.py
+	cp bc/build.py build.py
+	./remote/r.py build.py build.tcl $(SOURCES)
+
+.PHONY: remote_tb
+remote_tb:
+	rm -f build.py
+	cp bc/sim.py build.py
+	./remote/r.py build.py xsim_run.tcl $(SOURCES)
+	rm dump.tar.gz
+	mv dump.vcd vcd/remote_tb.vcd
+	open vcd/remote_tb.vcd
 
 .PHONY: font
 font:
@@ -75,7 +85,7 @@ core_tb:
 		hdl/riscv_constants.sv			\
 		hdl/riscv_alu.sv				\
 		hdl/riscv_decode.sv				\
-		hdl/pipeline.sv					\
+		hdl/pipeline2.sv				\
 		hdl/riscv_memory_iface.sv		\
 		hdl/riscv_regfile.sv			\
 		hdl/riscv_core.sv
