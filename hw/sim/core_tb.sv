@@ -17,6 +17,8 @@ module core_tb;
     logic [3:0] dmem_write_enable_out;
     logic [31:0] dmem_data_in;
 
+    logic [31:0] cycle;
+
 
     xilinx_true_dual_port_read_first_2_clock_ram #(
         .RAM_WIDTH(32),
@@ -32,6 +34,23 @@ module core_tb;
         .rsta(rst_in),
         .regcea(1'b1),
         .douta(imem_data_in)
+    );
+
+    xilinx_true_dual_port_read_first_byte_write_2_clock_ram #(
+        .NB_COL(4),
+        .COL_WIDTH(8),
+        .RAM_DEPTH(16384),
+        .RAM_PERFORMANCE("HIGH_PERFORMANCE"),
+        .INIT_FILE("data/program.mem")
+    ) dmem (
+        .addrb(dmem_addr_out[15:2]),
+        .dinb(dmem_data_out),
+        .clkb(clk_in),
+        .web(1'b0),
+        .enb(1'b1),
+        .rstb(rst_in),
+        .regceb(1'b1),
+        .doutb(dmem_data_in)
     );
 
     riscv_core uut (
@@ -57,6 +76,14 @@ module core_tb;
         clk_in = !clk_in;
     end
 
+    always_ff @(posedge clk_in) begin
+        if (rst_in) begin
+            cycle <= 0;
+        end else begin
+            cycle <= cycle + 1;
+        end
+    end
+
     initial begin
         $dumpfile("vcd/dump.vcd");
         $dumpvars(0,core_tb);
@@ -64,7 +91,6 @@ module core_tb;
 
         clk_in = 0;
         rst_in = 1;
-        dmem_data_in = 32'hDEADBEEF;
 
         #25;
         rst_in = 0;
