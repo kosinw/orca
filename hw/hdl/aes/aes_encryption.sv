@@ -23,48 +23,55 @@ typedef enum logic [2:0] {
 } Stage;
 
 module aes_encryption (
-  // Default inputs
-  input wire clk_in,
-  input wire rst_in,
+    // Default inputs
+    input wire clk_in,
+    input wire rst_in,
 
-  // Initialize encryption
-  input wire init_in,
+    // Initialize encryption
+    input wire init_in,
 
-  // Data input
-  input wire [127:0] data_in,
+    // Data input
+    input wire [127:0] data_in,
 
-  // Key input
-  input wire [127:0] key_in,
+    // Key input
+    input wire [127:0] key_in,
 
-  // Data ouput 
-  output logic [127:0] data_out,
-  output logic valid_out
+    // Data ouput 
+    output logic [127:0] data_out,
+    output logic valid_out
 );
 
+  // Initialiez round for what round of the encryption it is currently in
   Round round;
+  // Initialize stage for which stage within a round it is in
   Stage stage;
 
-  logic [127:0] temp_data, temp_xor, temp_subbytes_result;
-
+  // Initialize some temporary variables
+  logic [127:0] temp_data, temp_subbytes_result;
   logic [31:0] temp_mc_result_0, temp_mc_result_1, temp_mc_result_2, temp_mc_result_3;
+  logic [127:0] round_key, temp_round_key;
 
+  // Initialize cell values for data and mix columns matrix for processing
   logic [7:0] c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15;
   logic [7:0] m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15;
 
-  logic [127:0] round_key, temp_round_key;
-
+  // Encrypting flag - HIGH if encrypting, LOW if not
   logic encrypting;
 
   aes_sbox aes_sbox (
-    .data_in(temp_data),
-    .data_out(temp_subbytes_result)
+      .data_in (temp_data),
+      .data_out(temp_subbytes_result)
   );
 
   aes_key_schedule aes_key_schedule (
-    .round_in(round),
-    .key_in(round_key),
-    .key_out(temp_round_key)
+      .round_in(round),
+      .key_in  (round_key),
+      .key_out (temp_round_key)
   );
+
+  /********************************************
+  * Functions to handle mix columns operation * 
+  ********************************************/
 
   function [7:0] gm2(input [7:0] val);
     begin
@@ -81,18 +88,18 @@ module aes_encryption (
   function [31:0] mix_columns(input [31:0] val);
     logic [7:0] v0, v1, v2, v3, r0, r1, r2, r3;
     begin
-      v0 = val[31:24];
-      v1 = val[23:16];
-      v2 = val[15:08];
-      v3 = val[07:00];
-    
-      r0 = gm2(v0) ^ gm3(v1) ^ v2      ^ v3;
-      r1 = v0      ^ gm2(v1) ^ gm3(v2) ^ v3;
-      r2 = v0      ^ v1      ^ gm2(v2) ^ gm3(v3);
-      r3 = gm3(v0) ^ v1      ^ v2      ^ gm2(v3);
-      
+      v0          = val[31:24];
+      v1          = val[23:16];
+      v2          = val[15:08];
+      v3          = val[07:00];
+
+      r0          = gm2(v0) ^ gm3(v1) ^ v2 ^ v3;
+      r1          = v0 ^ gm2(v1) ^ gm3(v2) ^ v3;
+      r2          = v0 ^ v1 ^ gm2(v2) ^ gm3(v3);
+      r3          = gm3(v0) ^ v1 ^ v2 ^ gm2(v3);
+
       mix_columns = {r0, r1, r2, r3};
-    end 
+    end
   endfunction
 
   /**************
@@ -182,7 +189,9 @@ module aes_encryption (
                   stage <= ShiftRows;
                 end
                 ShiftRows: begin
-                  temp_data <= { c0, c1, c2, c3, c5, c6, c7, c4, c10, c11, c8, c9, c15, c12, c13, c14 };
+                  temp_data <= {
+                    c0, c1, c2, c3, c5, c6, c7, c4, c10, c11, c8, c9, c15, c12, c13, c14
+                  };
                   if (round == ROUND_10) begin
                     stage <= AddRoundKey;
                   end else begin
@@ -190,7 +199,9 @@ module aes_encryption (
                   end
                 end
                 MixColumns: begin
-                  temp_data <= { m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15 };
+                  temp_data <= {
+                    m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10, m11, m12, m13, m14, m15
+                  };
                   stage <= AddRoundKey;
                 end
                 AddRoundKey: begin
@@ -203,7 +214,7 @@ module aes_encryption (
                     stage <= IDLE;
                     valid_out <= 1'b1;
                     encrypting <= 1'b0;
-                  // Otherwise, cycle again
+                    // Otherwise, cycle again
                   end else begin
                     stage <= SubBytes;
                     round <= round + 1;
