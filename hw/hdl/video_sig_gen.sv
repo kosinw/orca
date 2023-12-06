@@ -7,7 +7,10 @@ module video_sig_gen
     parameter ACTIVE_LINES = 720,
     parameter V_FRONT_PORCH = 5,
     parameter V_SYNC_WIDTH = 5,
-    parameter V_BACK_PORCH = 20)
+    parameter V_BACK_PORCH = 20,
+    parameter TOTAL_LINES = ACTIVE_LINES + V_FRONT_PORCH + V_SYNC_WIDTH + V_BACK_PORCH,
+    parameter TOTAL_PIXELS = ACTIVE_H_PIXELS + H_FRONT_PORCH + H_SYNC_WIDTH + H_BACK_PORCH
+)
 (
     input wire clk_pixel_in,
     input wire rst_in,
@@ -20,9 +23,6 @@ module video_sig_gen
     output logic [5:0] fc_out);
 
     logic last_rst;
-
-    localparam TOTAL_LINES = ACTIVE_LINES + V_FRONT_PORCH + V_SYNC_WIDTH + V_BACK_PORCH; //figure this out (change me)
-    localparam TOTAL_PIXELS = ACTIVE_H_PIXELS + H_FRONT_PORCH + H_SYNC_WIDTH + H_BACK_PORCH; //figure this out (change me)
 
     assign ad_out = (rst_in||last_rst) ? 0 : (hcount_out < ACTIVE_H_PIXELS) && (vcount_out < ACTIVE_LINES);
     assign vs_out = (rst_in||last_rst) ? 0 : (vcount_out >= (ACTIVE_LINES + V_FRONT_PORCH)) && (vcount_out < (ACTIVE_LINES + V_FRONT_PORCH + V_SYNC_WIDTH));
