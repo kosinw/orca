@@ -1,6 +1,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+`define TOPLEVEL 1
+
 module top_level(
     input wire clk_board,
     input wire [15:0] sw,
@@ -139,7 +141,7 @@ module top_level(
     ////////////////////////////////////////////////////////////
 
     memory_controller memory_ctrl (
-        .clk_cpu_in(clk_100mhz),
+        .clk_cpu_in(clk_50mhz),
         .rst_in(sys_rst),
 
         .cpu_addr_in(cpu_addr_out),
@@ -163,8 +165,11 @@ module top_level(
         .keyboard_data_in()
     );
 
+    logic data_memory_debug_valid;
+    logic [31:0] data_memory_debug_data;
+
     program_ram data_memory (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .rst_in(sys_rst),
         .pc_in(pc),
         .instr_out(instr),
@@ -172,7 +177,9 @@ module top_level(
         .cpu_data_in(ram_data_in),
         .cpu_write_enable_in(ram_write_enable_in),
         .cpu_data_out(ram_data_out),
-        .uart_rx_in(uart_rxd)
+        .uart_rx_in(uart_rxd),
+        .debug_data_out(data_memory_debug_data),
+        .debug_valid_out(data_memory_debug_valid)
     );
 
     video_controller mvc (
@@ -185,7 +192,7 @@ module top_level(
         .red_out(video_red),
         .green_out(video_green),
         .blue_out(video_blue),
-        .clk_cpu_in(clk_100mhz),
+        .clk_cpu_in(clk_50mhz),
         .cpu_addr_in(video_addr_in),
         .cpu_data_in(video_data_in),
         .cpu_write_enable_in(video_write_enable_in),
@@ -195,7 +202,7 @@ module top_level(
     logic [6:0] ss_c;
 
     seven_segment_controller mssc (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .rst_in(sys_rst),
         .val_in(cpu_debug_out),
         .cat_out(ss_c),
