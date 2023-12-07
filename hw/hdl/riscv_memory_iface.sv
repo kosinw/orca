@@ -51,6 +51,11 @@ module riscv_memory_iface(
                 cpu_enable_read <= cpu_read_enable_in;
                 cpu_read_addr <= cpu_addr_in;
                 state <= WAIT;
+            end else if (state == READY) begin
+                cpu_size_read <= 0;
+                cpu_enable_read <= 0;
+                cpu_read_addr <= 0;
+                state <= READY;
             end else if (state == WAIT) begin
                 state <= FINISH;
             end else if (state == FINISH) begin

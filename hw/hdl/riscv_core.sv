@@ -119,8 +119,6 @@ module riscv_core (
     logic bypass;
 
     logic stall;
-    logic last_stall;
-    logic last_last_stall;
 
     logic annul;
     logic last_annul;
@@ -161,7 +159,7 @@ module riscv_core (
     logic [31:0]    DEBUG5_WB4_PC;
     logic           DEBUG5_WB5_WERF;
 
-    assign DEBUG0_STALL = stall || last_stall || last_last_stall;
+    assign DEBUG0_STALL = stall;
     assign DEBUG0_BYPASS = bypass;
     assign DEBUG0_ANNUL = annul || last_annul || last_last_annul;
     assign DEBUG0_MEM_READY = mem_ready;
@@ -215,7 +213,7 @@ module riscv_core (
             3'b111:     debug_out = WB.pc;
         endcase
 
-        led_out[15] = stall || last_stall || last_last_stall;
+        led_out[15] = stall;
         led_out[14] = bypass;
         led_out[13] = annul || last_annul || last_last_annul;
         led_out[12] = WB.werf;
@@ -319,9 +317,6 @@ module riscv_core (
     always_ff @(posedge clk_in) begin
         last_annul <= annul;
         last_last_annul <= last_annul;
-
-        last_stall <= stall;
-        last_last_stall <= last_stall;
     end
 
     //////////////////////////////////////////////////////////////////////
@@ -373,7 +368,7 @@ module riscv_core (
             if (annul || last_annul || last_last_annul) begin
                 ID.pc <= `ZERO;
                 ID.instr <= `NOP;
-            end else if (stall || last_stall || last_last_stall) begin
+            end else if (stall) begin
                 ID <= ID;
             end else begin
                 ID.pc <= PC_PIPELINE[1];
@@ -463,6 +458,7 @@ module riscv_core (
             WB.result <= MEM.alu_result;
             WB.data <= mem_data_out;
             WB.werf <= MEM.werf;
+            WB.wb_sel <= MEM.wb_sel;
         end
     end
 
@@ -470,7 +466,7 @@ module riscv_core (
         case (WB.wb_sel)
             `WRITEBACK_ALU:     wb_data = WB.result;
             `WRITEBACK_PC4:     wb_data = WB.pc + 4;
-            `WRITEBACK_DATA:    wb_data = mem_data_out;
+            `WRITEBACK_DATA:    wb_data = WB.data;
             default:            wb_data = 32'h0;
         endcase
     end

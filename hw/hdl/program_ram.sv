@@ -152,7 +152,6 @@ module ram_bridge_rx (
             end
         end
     end
-
 endmodule
 
 `default_nettype wire
