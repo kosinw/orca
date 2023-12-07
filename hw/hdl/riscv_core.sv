@@ -117,7 +117,12 @@ module riscv_core (
     logic raw_rs2_wb2;
 
     logic stall;
+    logic last_stall;
+    logic last_last_stall;
+
     logic annul;
+    logic last_annul;
+    logic last_last_annul;
 
     // probes for testbenching
 `ifndef TOPLEVEL
@@ -149,11 +154,11 @@ module riscv_core (
     logic [31:0]    DEBUG5_WB_PC;
     logic           DEBUG5_WB_WERF;
 
-    assign DEBUG0_STALL = stall;
+    assign DEBUG0_STALL = stall || last_stall || last_last_stall;
     assign DEBUG0_BYPASS = (raw_rs1_ex || raw_rs1_mem || raw_rs1_wb1) ||
                            (raw_rs1_wb2 || raw_rs2_ex || raw_rs2_mem) ||
                            (raw_rs2_wb1 || raw_rs2_wb2);
-    assign DEBUG0_ANNUL = annul;
+    assign DEBUG0_ANNUL = annul || last_annul || last_last_annul;
     assign DEBUG0_IF_PC = PC;
     assign DEBUG1_ID_PC = ID.pc;
     assign DEBUG1_ID_INSTR = ID.instr;
@@ -303,6 +308,14 @@ module riscv_core (
         end
     end
 
+    always_ff @(posedge clk_in) begin
+        last_annul <= annul;
+        last_last_annul <= last_annul;
+
+        last_stall <= stall;
+        last_last_stall <= last_stall;
+    end
+
     //////////////////////////////////////////////////////////////////////
     //
     // INSTRUCTION FETCH (IF) - 3 cycles
@@ -349,10 +362,10 @@ module riscv_core (
         if (rst_in) begin
             ID <= '0;
         end else if (cpu_step_in) begin
-            if (annul) begin
+            if (annul || last_annul || last_last_annul) begin
                 ID.pc <= `ZERO;
                 ID.instr <= `NOP;
-            end else if (stall) begin
+            end else if (stall || last_stall || last_last_stall) begin
                 ID <= ID;
             end else begin
                 ID.pc <= PC_PIPELINE[1];

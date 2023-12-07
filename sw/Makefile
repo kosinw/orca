@@ -40,7 +40,7 @@ build/obj/%.elf: build/obj/%.c.o $(RUNTIME) linker.ld
 # Compilation rules for .c.o files
 build/obj/%.c.o: src/%.c Makefile
 	mkdir -p "$$(dirname $@)"
-	$(CC) -fdata-sections -ffunction-sections -Iruntime -march=rv32i -mabi=ilp32 -ffreestanding -O2 -nostdlib -o $@ -c $<
+	$(CC) -fdata-sections -ffunction-sections -Iruntime -march=rv32i -mabi=ilp32 -ffreestanding -O0 -nostdlib -o $@ -c $<
 
 # Compilation rules for .S.o files
 build/obj/%.S.o: src/%.S Makefile

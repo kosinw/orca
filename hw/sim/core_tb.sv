@@ -4,8 +4,6 @@
 `include "hdl/riscv_constants.sv"
 
 module core_tb;
-    // reg [31:0] INSTRUCTIONS [0:16383];
-
     logic clk_in;
     logic rst_in;
 
@@ -92,10 +90,10 @@ module core_tb;
         clk_in = 0;
         rst_in = 1;
 
-        #25;
+        #10;
         rst_in = 0;
 
-        #2000;
+        #10_000;
 
         $display("Finishing simulation...");
         $finish;
