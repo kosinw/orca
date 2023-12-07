@@ -19,6 +19,7 @@ if __name__ == "__main__":
     chunks = [binary_data[i:i+4] for i in range(0, len(binary_data), 4)]
 
     print(f"sending '{input_file}' to orca computer...")
+    time.sleep(1)
 
     with serial.Serial(PORT, BAUDRATE) as uart:
         for i in range(len(chunks)):

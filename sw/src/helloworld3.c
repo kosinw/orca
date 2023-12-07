@@ -3,14 +3,6 @@
 void
 main(void)
 {
-    char *p = "Hello, world!";
-    int i;
-
-    for (i = 0; *p != '\0'; i += 2)
-    {
-        *((volatile char*)(0x20000 + i)) = *p;
-        p++;
-    }
-
-    *((volatile char*)(0x20000 + 322)) = ((i*i) + '0');
+    char *p = "H\x4fe\x4fl\x4fl\x4fo\x4f,\x4f \x4fw\x4fo\x4fr\x4fl\x4fd\x4f!\x4f";
+    memmove((void*)0x20000, p, sizeof(p) - 1);
 }

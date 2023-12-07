@@ -24,7 +24,6 @@ module top_level(
     // turn off bright LEDs
     assign rgb1 = 0;
     assign rgb0 = 0;
-    assign led = sw;
 
     // have btn[0] control resetting system
     logic sys_rst;
@@ -117,12 +116,12 @@ module top_level(
         .level_out(btn2_press)
     );
 
-    assign cpu_halt = sw[14];
+    assign cpu_halt = sw[15];
     assign cpu_step = cpu_halt ? btn2_press : 1'b1;
 
     riscv_core core (
         .clk_in(clk_100mhz),
-        .rst_in(btn[1] || sys_rst),
+        .rst_in(btn[1]),
         .cpu_step_in(cpu_step),
         .imem_data_in(instr),
         .imem_addr_out(pc),
@@ -131,7 +130,8 @@ module top_level(
         .dmem_write_enable_out(cpu_write_enable_out),
         .dmem_data_in(cpu_data_in),
         .debug_in(sw[7:0]),
-        .debug_out(cpu_debug_out)
+        .debug_out(cpu_debug_out),
+        .led_out(led)
     );
 
     ////////////////////////////////////////////////////////////
