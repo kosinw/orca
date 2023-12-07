@@ -21,6 +21,7 @@ module riscv_core (
 );
     typedef struct packed {
         logic   [31:0]  pc;
+        logic   [31:0]  instr;
     } InstructionDecodeState;
 
     typedef struct packed {
@@ -66,7 +67,7 @@ module riscv_core (
     //  data memory read/write (no caching)
     //
 
-    logic [31:0]            PC0, PC;
+    logic [31:0]            PC;
     InstructionDecodeState  ID;
     ExecuteState            EX;
     MemoryState             MEM;
@@ -124,6 +125,7 @@ module riscv_core (
     logic           DEBUG0_BYPASS;
     logic           DEBUG0_ANNUL;
     logic [31:0]    DEBUG0_IF_PC;
+    logic [31:0]    DEBUG1_ID_PC;
     logic [31:0]    DEBUG1_ID_INSTR;
     logic [4:0]     DEBUG1_ID_RS1;
     logic [4:0]     DEBUG1_ID_RS2;
@@ -153,7 +155,8 @@ module riscv_core (
                            (raw_rs2_wb1 || raw_rs2_wb2);
     assign DEBUG0_ANNUL = annul;
     assign DEBUG0_IF_PC = PC;
-    assign DEBUG1_ID_INSTR = imem_data_in;
+    assign DEBUG1_ID_PC = ID.pc;
+    assign DEBUG1_ID_INSTR = ID.instr;
     assign DEBUG1_ID_RS1 = id_rs1;
     assign DEBUG1_ID_RS2 = id_rs2;
     assign DEBUG1_ID_RD  = id_rd;
@@ -187,12 +190,13 @@ module riscv_core (
     always_comb begin
         reg_debug_in = debug_in[4:0];
         case (debug_in[7:5])
-            3'b000:     debug_out = imem_addr_out;
+            3'b000:     debug_out = ID.pc;
             3'b001:     debug_out = reg_debug_out;
-            3'b010:     debug_out = imem_data_in;
+            3'b010:     debug_out = ID.instr;
             3'b011:     debug_out = dmem_addr_out;
             3'b100:     debug_out = {28'b0, dmem_write_enable_out};
             3'b101:     debug_out = dmem_data_in;
+            3'b110:     debug_out = PC;
             default:    debug_out = 32'hDEADBEEF;
         endcase
     end
@@ -301,30 +305,36 @@ module riscv_core (
 
     //////////////////////////////////////////////////////////////////////
     //
-    // INSTRUCTION FETCH (IF) - 2 cycles
+    // INSTRUCTION FETCH (IF) - 3 cycles
     //
     //////////////////////////////////////////////////////////////////////
 
-    assign imem_addr_out = PC0;
+    logic     [31:0] PC_PIPELINE [1:0];
+
+    always_ff @(posedge clk_in) begin
+        if (rst_in || annul) begin
+            PC_PIPELINE[0] <= 0;
+            PC_PIPELINE[1] <= 0;
+        end else if (!stall) begin
+            PC_PIPELINE[0] <= PC;
+            PC_PIPELINE[1] <= PC_PIPELINE[0];
+        end
+    end
+
+    assign imem_addr_out = PC;
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
-            PC0 <= 0;
             PC <= 0;
         end else if (cpu_step_in) begin
             if (annul) begin
                 case (EX.pc_sel)
-                    `PC_SEL_BRJMP:  PC0 <= EX.br_target;
-                    `PC_SEL_ALU:    PC0 <= ex_alu_result;
-                    default:        PC0 <= PC0 + 4;
+                    `PC_SEL_BRJMP:  PC <= EX.br_target;
+                    `PC_SEL_ALU:    PC <= ex_alu_result;
+                    default:        PC <= PC + 4;
                 endcase
-                PC <= `ZERO;
-            end else if (stall) begin
-                PC0 <= PC0;
-                PC <= PC;
             end else begin
-                PC0 <= PC0 + 4;
-                PC <= PC0;
+                PC <= (stall) ? PC_PIPELINE[1] : PC + 4;
             end
         end
     end
@@ -341,12 +351,12 @@ module riscv_core (
         end else if (cpu_step_in) begin
             if (annul) begin
                 ID.pc <= `ZERO;
-                // ID.instr <= `NOP;
+                ID.instr <= `NOP;
             end else if (stall) begin
                 ID <= ID;
             end else begin
-                ID.pc <= PC;
-                // ID.instr <= imem_data_in;
+                ID.pc <= PC_PIPELINE[1];
+                ID.instr <= imem_data_in;
             end
         end
     end
@@ -454,7 +464,7 @@ module riscv_core (
     //////////////////////////////////////////////////////////////////////
 
     riscv_decode decoder (
-        .inst_in(imem_data_in),
+        .inst_in(ID.instr),
         .rs1_out(id_rs1),
         .rs2_out(id_rs2),
         .rd_out(id_rd),

@@ -34,7 +34,7 @@ module program_ram (
     assign cpu_addr_in_range = (cpu_addr_in < 32'h20000);
     assign cpu_write_enable = (cpu_addr_in_range) ? cpu_write_enable_in : 4'b0000;
 
-    uart_rx #(.CLOCKS_PER_BAUD(16)) urx (
+    uart_rx #(.CLOCKS_PER_BAUD(33)) urx (
         .clk(clk_in),
         .rx(uart_rx_in),
         .data_o(urx_brx_data),

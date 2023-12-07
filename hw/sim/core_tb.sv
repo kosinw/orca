@@ -95,7 +95,7 @@ module core_tb;
         #25;
         rst_in = 0;
 
-        #800;
+        #2000;
 
         $display("Finishing simulation...");
         $finish;
