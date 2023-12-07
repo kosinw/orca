@@ -29,7 +29,7 @@ module core_tb;
         .clka(clk_in),
         .wea(1'b0),
         .ena(1'b1),
-        .rsta(rst_in),
+        .rsta(1'b0),
         .regcea(1'b1),
         .douta(imem_data_in)
     );
@@ -44,9 +44,9 @@ module core_tb;
         .addrb(dmem_addr_out[15:2]),
         .dinb(dmem_data_out),
         .clkb(clk_in),
-        .web(1'b0),
+        .web(dmem_write_enable_out),
         .enb(1'b1),
-        .rstb(rst_in),
+        .rstb(1'b0),
         .regceb(1'b1),
         .doutb(dmem_data_in)
     );
@@ -63,10 +63,7 @@ module core_tb;
         .dmem_addr_out(dmem_addr_out),
         .dmem_data_out(dmem_data_out),
         .dmem_write_enable_out(dmem_write_enable_out),
-        .dmem_data_in(dmem_data_in),
-
-        .debug_in(8'b10000000),
-        .debug_out()
+        .dmem_data_in(dmem_data_in)
     );
 
     always begin

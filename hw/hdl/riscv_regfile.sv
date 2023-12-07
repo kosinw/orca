@@ -32,9 +32,8 @@ module riscv_regfile(
         if (rst_in) begin
             for (integer i = 1; i < 32; i = i + 1)
                 registers[i] <= 32'b0;
-        end else begin
-            if (step_in && write_enable_in && rd_in != 5'b0)
-                registers[rd_in] <= wd_in;
+        end else if (step_in && write_enable_in && rd_in != 5'b0) begin
+            registers[rd_in] <= wd_in;
         end
     end
 endmodule
