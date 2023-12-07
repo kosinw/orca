@@ -45,7 +45,7 @@ module aes_core_tb;
     end
   endtask
 
-  task test(input [2:0] tc_number, input mode, input [127:0] aes_128_key, input [127:0] plaintext, input [127:0] expected);
+  task test(input [3:0] tc_number, input mode, input [127:0] aes_128_key, input [127:0] plaintext, input [127:0] expected);
     begin
       $display("*** TC %0d Started   ***", tc_number);
       mode_in = mode;
@@ -58,12 +58,22 @@ module aes_core_tb;
       wait_valid();
 
       if (data_out == expected) begin
-        $display("*** TC %0d Successful!", tc_number);
+        if (mode) begin
+          $display("*** TC %0d Encryption Successful!", tc_number);
+        end else begin
+          $display("*** TC %0d Decryption Successful!", tc_number);
+        end
       end else begin
-        $display("*** TC %0d NOT Successful :(", tc_number);
-        $display("Expected: 0x%032x", expected);
-        $display("Got:      0x%032x", data_out);
-        $display("  \n");
+        if (mode) begin
+          $display("*** TC %0d Encryption NOT Successful :(", tc_number);
+          $display("Expected: 0x%032x", expected);
+          $display("Got:      0x%032x", data_out);
+          $display("  \n");
+        end else begin
+          $display("*** TC %0d Decryption NOT Successful :(", tc_number);
+          $display("Expected: 0x%032x", expected);
+          $display("Got:      0x%032x", data_out);
+        end
       end
     end
   endtask
@@ -107,10 +117,10 @@ module aes_core_tb;
     rst_in = 0;
 
     // #10;
-    // mode_in = 1'b1;
+    // mode_in = 1'b0;
     // init_in = 1'b1;
     // key_in = aes_128_key0;
-    // data_in = plaintext5;
+    // data_in = plaintext5_enc_expected;
     // #10;
     // init_in = 1'b0;
     
@@ -120,12 +130,19 @@ module aes_core_tb;
 
     // #1000;
 
-    test(3'd0, 1'b1, aes_128_key0, plaintext0, plaintext0_enc_expected);
-    test(3'd1, 1'b1, aes_128_key0, plaintext1, plaintext1_enc_expected);
-    test(3'd2, 1'b1, aes_128_key0, plaintext2, plaintext2_enc_expected);
-    test(3'd3, 1'b1, aes_128_key0, plaintext3, plaintext3_enc_expected);
-    test(3'd4, 1'b1, aes_128_key1, plaintext4, plaintext4_enc_expected);
-    test(3'd5, 1'b1, aes_128_key0, plaintext5, plaintext5_enc_expected);
+    test(4'd0, 1'b1, aes_128_key0, plaintext0, plaintext0_enc_expected);
+    test(4'd1, 1'b1, aes_128_key0, plaintext1, plaintext1_enc_expected);
+    test(4'd2, 1'b1, aes_128_key0, plaintext2, plaintext2_enc_expected);
+    test(4'd3, 1'b1, aes_128_key0, plaintext3, plaintext3_enc_expected);
+    test(4'd4, 1'b1, aes_128_key1, plaintext4, plaintext4_enc_expected);
+    test(4'd5, 1'b1, aes_128_key0, plaintext5, plaintext5_enc_expected);
+
+    test(4'd6, 1'b0, aes_128_key0, plaintext0_enc_expected, plaintext0);
+    test(4'd7, 1'b0, aes_128_key0, plaintext1_enc_expected, plaintext1);
+    test(4'd8, 1'b0, aes_128_key0, plaintext2_enc_expected, plaintext2);
+    test(4'd9, 1'b0, aes_128_key0, plaintext3_enc_expected, plaintext3);
+    test(4'd10, 1'b0, aes_128_key1, plaintext4_enc_expected, plaintext4);
+    test(4'd11, 1'b0, aes_128_key0, plaintext5_enc_expected, plaintext5);
 
     #100;
 

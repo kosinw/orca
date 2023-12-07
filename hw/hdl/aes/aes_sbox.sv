@@ -3,7 +3,7 @@ module aes_sbox (
     output logic [127:0] data_out
 );
 
-  logic [7:0] sbox[255:0];
+  logic [7:0] sbox [255:0];
 
   // always_comb begin
   assign data_out[127:120] = sbox[data_in[127:120]];

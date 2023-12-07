@@ -17,3 +17,6 @@
 `define SHIFT_ROWS        3'd2  
 `define MIX_COLUMNS       3'd3  
 `define ADD_ROUND_KEY     3'd4
+`define INV_SUB_BYTES     3'd5
+`define INV_SHIFT_ROWS    3'd6
+`define INV_MIX_COLUMNS   3'd7
