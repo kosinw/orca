@@ -16,7 +16,7 @@ module riscv_core (
     output logic [3:0]  dmem_write_enable_out,
     input  wire  [31:0] dmem_data_in,
 
-    input wire [15:0] debug_in,
+    input wire   [15:0] debug_in,
     output logic [31:0] debug_out,
     output logic [15:0] led_out
 );
@@ -65,8 +65,8 @@ module riscv_core (
 
     //
     //  The processor implements the base RV32I instruction set using a
-    //  5-stage pipeline with 2 cycle instruction memory read and 2 cycle
-    //  data memory read/write (no caching)
+    //  5-stage pipeline with a 2-way set associative instruction cache
+    //  and no data cache (don't have the time).
     //
 
     logic [31:0]            PC;
@@ -75,8 +75,12 @@ module riscv_core (
     MemoryState             MEM;
     WritebackState          WB;
 
+    // IF stage combinational signals
+    logic   [31:0] if_instruction;
+    logic          if_cache_miss;
+
     // ID stage combinational signals
-    logic       if_ready;
+    logic [31:0] id_instr;
     logic [4:0] id_rs1, id_rs2, id_rd;
     logic [31:0] id_rd1, id_rd2;
     logic [31:0] id_imm;
@@ -93,23 +97,31 @@ module riscv_core (
     logic [31:0] id_operand_b;
 
     // debugging signals
-    logic [4:0] reg_debug_in;
+    logic [4:0]  reg_debug_in;
     logic [31:0] reg_debug_out;
 
     // EX stage combinational signals
     logic [31:0] ex_alu_result;
+    logic [31:0] ex_next_pc;
     logic        ex_br_taken;
 
     // MEM stage combinational signals
     logic [31:0] mem_data_out;
-    logic        mem_ready;
+    logic        mem_cache_miss;
 
     // WB stage combinational signals
     logic [31:0] wb_data;
 
-    // Hazard management combinational signals
-    logic ltu_stall_rs1;
-    logic ltu_stall_rs2;
+    // control logic
+    logic ltu_hazard_rs1;
+    logic ltu_hazard_rs2;
+    logic ltu_hazard;
+
+    logic if_stall;
+    logic id_stall;
+    logic ex_stall;
+    logic mem_stall;
+    logic wb_stall;
 
     logic raw_rs1_ex;
     logic raw_rs2_ex;
@@ -119,79 +131,75 @@ module riscv_core (
     logic raw_rs2_wb;
     logic bypass;
 
-    logic stall;
-
     logic annul;
-    logic last_annul;
-    logic last_last_annul;
 
     // probes for testbenching
 `ifndef TOPLEVEL
-    logic           DEBUG0_STALL;
+    logic [4:0]     DEBUG0_STALL;
     logic           DEBUG0_BYPASS;
     logic           DEBUG0_ANNUL;
-    logic           DEBUG0_MEM_READY;
 
     logic [31:0]    DEBUG1_IF_PC;
 
-    logic [31:0]    DEBUG2_ID1_PC;
-    logic [31:0]    DEBUG2_ID2_INSTR;
-    logic [4:0]     DEBUG2_ID3_RS1;
-    logic [4:0]     DEBUG2_ID4_RS2;
-    logic [4:0]     DEBUG2_ID5_RD;
-    logic [31:0]    DEBUG2_ID6_X1;
-    logic [31:0]    DEBUG2_ID7_X2;
-    logic [31:0]    DEBUG2_ID8_IMM;
+    logic [31:0]    DEBUG2_ID0_PC;
+    logic [31:0]    DEBUG2_ID1_INSTR;
+    logic [4:0]     DEBUG2_ID2_RS1;
+    logic [4:0]     DEBUG2_ID3_RS2;
+    logic [4:0]     DEBUG2_ID4_RD;
+    logic [31:0]    DEBUG2_ID5_X1;
+    logic [31:0]    DEBUG2_ID6_X2;
+    logic [31:0]    DEBUG2_ID7_IMM;
 
+    logic [31:0]    DEBUG3_EX0_PC;
     logic [31:0]    DEBUG3_EX1_A;
     logic [31:0]    DEBUG3_EX2_B;
     logic [31:0]    DEBUG3_EX3_RESULT;
     logic [3:0]     DEBUG3_EX4_ALU_FUNC;
     logic           DEBUG3_EX5_BRANCH_TAKEN;
 
+    logic [31:0]    DEBUG4_MEM0_PC;
     logic [31:0]    DEBUG4_MEM1_ADDR;
     logic [31:0]    DEBUG4_MEM2_DATA;
     logic           DEBUG4_MEM3_READ_ENABLE;
     logic           DEBUG4_MEM4_WRITE_ENABLE;
 
-    logic [31:0]    DEBUG5_WB1_DATA;
-    logic [4:0]     DEBUG5_WB2_RD;
-    logic [31:0]    DEBUG5_WB3_RESULT;
-    logic [31:0]    DEBUG5_WB4_PC;
-    logic           DEBUG5_WB5_WERF;
+    logic [31:0]    DEBUG5_WB0_PC;
+    logic [4:0]     DEBUG5_WB1_RD;
+    logic [31:0]    DEBUG5_WB2_RESULT;
+    logic           DEBUG5_WB3_WERF;
 
-    assign DEBUG0_STALL = stall;
+    assign DEBUG0_STALL = {if_stall,id_stall,ex_stall,mem_stall,wb_stall};
     assign DEBUG0_BYPASS = bypass;
-    assign DEBUG0_ANNUL = annul || last_annul || last_last_annul;
-    assign DEBUG0_MEM_READY = mem_ready;
+    assign DEBUG0_ANNUL = annul;
 
     assign DEBUG1_IF_PC = PC;
 
-    assign DEBUG2_ID1_PC = ID.pc;
-    assign DEBUG2_ID2_INSTR = ID.instr;
-    assign DEBUG2_ID3_RS1 = id_rs1;
-    assign DEBUG2_ID4_RS2 = id_rs2;
-    assign DEBUG2_ID5_RD  = id_rd;
-    assign DEBUG2_ID6_X1  = id_rd1;
-    assign DEBUG2_ID7_X2  = id_rd2;
-    assign DEBUG2_ID8_IMM = id_imm;
+    assign DEBUG2_ID0_PC = ID.pc;
+    assign DEBUG2_ID1_INSTR = ID.instr;
+    assign DEBUG2_ID2_RS1 = id_rs1;
+    assign DEBUG2_ID3_RS2 = id_rs2;
+    assign DEBUG2_ID4_RD  = id_rd;
+    assign DEBUG2_ID5_X1  = id_rd1;
+    assign DEBUG2_ID6_X2  = id_rd2;
+    assign DEBUG2_ID7_IMM = id_imm;
 
+    assign DEBUG3_EX0_PC = EX.pc;
     assign DEBUG3_EX1_A   = EX.a;
     assign DEBUG3_EX2_B   = EX.b;
     assign DEBUG3_EX3_RESULT = ex_alu_result;
     assign DEBUG3_EX4_ALU_FUNC = EX.alu_func;
     assign DEBUG3_EX5_BRANCH_TAKEN = ex_br_taken;
 
+    assign DEBUG4_MEM0_PC = MEM.pc;
     assign DEBUG4_MEM1_ADDR = MEM.addr;
     assign DEBUG4_MEM2_DATA = MEM.alu_result;
     assign DEBUG4_MEM3_READ_ENABLE = MEM.dmem_read_enable;
     assign DEBUG4_MEM4_WRITE_ENABLE = MEM.dmem_write_enable;
 
-    assign DEBUG5_WB1_DATA = WB.data;
-    assign DEBUG5_WB2_RD = WB.rd;
-    assign DEBUG5_WB3_RESULT = WB.result;
-    assign DEBUG5_WB4_PC = WB.pc;
-    assign DEBUG5_WB5_WERF = WB.werf;
+    assign DEBUG5_WB0_PC = WB.pc;
+    assign DEBUG5_WB1_RD = WB.rd;
+    assign DEBUG5_WB2_RESULT = wb_data;
+    assign DEBUG5_WB3_WERF = WB.werf;
 `endif // TOPLEVEL
 
 
@@ -202,31 +210,35 @@ module riscv_core (
     //////////////////////////////////////////////////////////////////////
 
     always_comb begin
-        reg_debug_in = debug_in[6:3];
-        case (debug_in[2:0])
-            3'b000:     debug_out = ID.pc;
-            3'b001:     debug_out = ID.instr;
-            3'b010:     debug_out = reg_debug_out;
-            3'b011:     debug_out = MEM.addr;
-            3'b100:     debug_out = MEM.alu_result;
-            3'b101:     debug_out = dmem_data_in;
-            3'b110:     debug_out = wb_data;
-            3'b111:     debug_out = WB.pc;
+        reg_debug_in = debug_in[14:11];
+        case (debug_in[3:0])
+            4'b0000:     debug_out = ID.pc;
+            4'b0001:     debug_out = ID.instr;
+            4'b0010:     debug_out = reg_debug_out;
+            4'b0011:     debug_out = MEM.addr;
+            4'b0100:     debug_out = MEM.alu_result;
+            4'b0101:     debug_out = dmem_data_in;
+            4'b0110:     debug_out = wb_data;
+            4'b0111:     debug_out = WB.pc;
+            default:     debug_out = 32'hDEADBEEF;
         endcase
 
-        led_out[15] = stall;
-        led_out[14] = bypass;
-        led_out[13] = annul || last_annul || last_last_annul;
-        led_out[12] = WB.werf;
-        led_out[11] = MEM.dmem_read_enable;
-        led_out[10] = MEM.dmem_write_enable;
-        led_out[9]  = cpu_step_in;
-        led_out[8]  = mem_ready;
+        led_out[15] = if_stall;
+        led_out[14] = id_stall;
+        led_out[13] = ex_stall;
+        led_out[12] = mem_stall;
+        led_out[11] = wb_stall;
+
+        led_out[ 0] = bypass;
+        led_out[ 1] = annul;
+        led_out[ 2] = WB.werf;
+        led_out[ 3] = MEM.dmem_read_enable;
+        led_out[ 4] = MEM.dmem_write_enable;
     end
 
     //////////////////////////////////////////////////////////////////////
     //
-    // HAZARD MANAGEMENT
+    // CONTROL LOGIC
     //
     //////////////////////////////////////////////////////////////////////
 
@@ -239,15 +251,16 @@ module riscv_core (
     //  - Said load instruction has an RD equal to RS1/RS2
     //  - ENSURE THERE IS A BYPASS FROM WB
 
-    assign ltu_stall_rs1 = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) &&
-                           ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs1) ||
-                            (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs1));
+    assign ltu_hazard_rs1 = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs1) || (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs1));
+    assign ltu_hazard_rs2 = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs2) || (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs2));
 
-    assign ltu_stall_rs2 = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) &&
-                        ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs2) ||
-                        (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs2));
+    assign ltu_hazard     = ltu_hazard_rs1 || ltu_hazard_rs2;
 
-    assign stall = ltu_stall_rs1 || ltu_stall_rs2;
+    assign if_stall     = ltu_hazard || if_cache_miss || mem_cache_miss;
+    assign id_stall     = ltu_hazard || mem_cache_miss;
+    assign ex_stall     = mem_cache_miss;
+    assign mem_stall    = mem_cache_miss;
+    assign wb_stall     = mem_cache_miss;
 
     // Read-after-write hazard is active when:
     //  - The incident register cannot be x0
@@ -259,7 +272,6 @@ module riscv_core (
     assign raw_rs1_mem = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (MEM.werf && MEM.rd === id_rs1);
     assign raw_rs1_wb  = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (WB.werf  && WB.rd  === id_rs1);
 
-    // NOTE(kosinw): Edge case where stores use RS2 but not in operator select
     assign raw_rs2_ex  = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (EX.werf  && EX.rd  === id_rs2);
     assign raw_rs2_mem = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (MEM.werf && MEM.rd === id_rs2);
     assign raw_rs2_wb  = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (WB.werf  && WB.rd  === id_rs2);
@@ -315,80 +327,77 @@ module riscv_core (
     assign bypass = (raw_rs1_ex || raw_rs1_mem || raw_rs1_wb) ||
                     (raw_rs2_ex || raw_rs2_mem || raw_rs2_wb);
 
-    always_ff @(posedge clk_in) begin
-        last_annul <= annul;
-        last_last_annul <= last_annul;
-    end
-
     //////////////////////////////////////////////////////////////////////
     //
-    // INSTRUCTION FETCH (IF) - 3 cycles
+    // INSTRUCTION FETCH (IF)
     //
     //////////////////////////////////////////////////////////////////////
-
-    logic     [31:0] PC_PIPELINE [1:0];
-
-    always_ff @(posedge clk_in) begin
-        if (rst_in || annul) begin
-            PC_PIPELINE[0] <= 0;
-            PC_PIPELINE[1] <= 0;
-        end else if (!stall) begin
-            PC_PIPELINE[0] <= PC;
-            PC_PIPELINE[1] <= PC_PIPELINE[0];
-        end
-    end
-
-    assign imem_addr_out = PC;
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             PC <= 0;
-        end else if (cpu_step_in && mem_ready) begin
+        end else if (cpu_step_in) begin
             if (annul) begin
-                case (EX.pc_sel)
-                    `PC_SEL_BRJMP:  PC <= EX.br_target;
-                    `PC_SEL_ALU:    PC <= ex_alu_result;
-                    default:        PC <= PC + 4;
-                endcase
-            end else begin
-                PC <= (stall) ? PC_PIPELINE[1] : PC + 4;
+                PC <= ex_next_pc;
+            end else if (!if_stall) begin
+                PC <= PC + 4;
             end
         end
     end
 
     //////////////////////////////////////////////////////////////////////
     //
-    // INSTRUCTION DECODE (ID) - 1 cycle
+    // INSTRUCTION DECODE (ID)
     //
     //////////////////////////////////////////////////////////////////////
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             ID <= '0;
-        end else if (cpu_step_in && mem_ready) begin
-            if (annul || last_annul || last_last_annul) begin
+        end else if (cpu_step_in) begin
+            if (annul) begin
                 ID.pc <= `ZERO;
                 ID.instr <= `NOP;
-            end else if (stall) begin
+            end else if (id_stall) begin
                 ID <= ID;
+            end else if (if_stall) begin
+                ID.pc <= `ZERO;
+                ID.instr <= `NOP;
             end else begin
-                ID.pc <= PC_PIPELINE[1];
-                ID.instr <= imem_data_in;
+                ID.pc <= PC;
+                ID.instr <= if_instruction;
             end
         end
     end
 
     //////////////////////////////////////////////////////////////////////
     //
-    // EXECUTE (EX) - 1 cycle
+    // EXECUTE (EX)
     //
     //////////////////////////////////////////////////////////////////////
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             EX <= '0;
-        end else if (cpu_step_in && mem_ready) begin
-            if (annul || stall) begin
+        end else if (cpu_step_in) begin
+            if (annul) begin
+                EX.pc           <= `ZERO;
+                EX.br_target    <= `ZERO;
+                EX.imm          <= `ZERO;
+                EX.rd           <= `X0;
+                EX.a            <= `ZERO;
+                EX.b            <= `ZERO;
+                EX.br_func      <= `BR_FUNC_NONE;
+                EX.alu_func     <= `ALU_FUNC_NONE;
+                EX.pc_sel       <= `PC_SEL_NEXTPC;
+                EX.wb_sel       <= `WRITEBACK_X;
+                EX.werf         <= `OFF;
+                EX.dmem_size    <= `MASK_NONE;
+                EX.dmem_read_enable <= `OFF;
+                EX.dmem_write_enable <= `OFF;
+            end else if (ex_stall) begin
+                EX <= EX;
+            end else if (id_stall) begin
                 EX.pc           <= `ZERO;
                 EX.br_target    <= `ZERO;
                 EX.imm          <= `ZERO;
@@ -422,44 +431,52 @@ module riscv_core (
         end
     end
 
+    assign ex_next_pc = (EX.pc_sel == `PC_SEL_BRJMP)    ? EX.br_target :
+                        (EX.pc_sel == `PC_SEL_ALU)      ? ex_alu_result :
+                        PC + 4;
+
     //////////////////////////////////////////////////////////////////////
     //
-    // MEMORY (MEM) - >3 cycles
+    // MEMORY (MEM)
     //
     //////////////////////////////////////////////////////////////////////
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             MEM <= '0;
-        end else if (cpu_step_in && mem_ready) begin
-            MEM.pc <= EX.pc;
-            MEM.rd <= EX.rd;
-            MEM.alu_result <= ex_alu_result;
-            MEM.addr <= EX.imm + EX.a;
-            MEM.wb_sel <= EX.wb_sel;
-            MEM.werf <= EX.werf;
-            MEM.dmem_size <= EX.dmem_size;
-            MEM.dmem_read_enable <= EX.dmem_read_enable;
-            MEM.dmem_write_enable <= EX.dmem_write_enable;
+        end else if (cpu_step_in) begin
+            if (!mem_stall) begin
+                MEM.pc <= EX.pc;
+                MEM.rd <= EX.rd;
+                MEM.alu_result <= ex_alu_result;
+                MEM.addr <= EX.imm + EX.a;
+                MEM.wb_sel <= EX.wb_sel;
+                MEM.werf <= EX.werf;
+                MEM.dmem_size <= EX.dmem_size;
+                MEM.dmem_read_enable <= EX.dmem_read_enable;
+                MEM.dmem_write_enable <= EX.dmem_write_enable;
+            end
         end
     end
 
     //////////////////////////////////////////////////////////////////////
     //
-    // WRITEBACK (WB) - 1 cycle
+    // WRITEBACK (WB)
     //
     //////////////////////////////////////////////////////////////////////
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             WB <= '0;
-        end else if (cpu_step_in && mem_ready) begin
-            WB.pc <= MEM.pc;
-            WB.rd <= MEM.rd;
-            WB.result <= MEM.alu_result;
-            WB.data <= mem_data_out;
-            WB.werf <= MEM.werf;
-            WB.wb_sel <= MEM.wb_sel;
+        end else if (cpu_step_in) begin
+            if (!wb_stall) begin
+                WB.pc <= MEM.pc;
+                WB.rd <= MEM.rd;
+                WB.result <= MEM.alu_result;
+                WB.data <= mem_data_out;
+                WB.werf <= MEM.werf;
+                WB.wb_sel <= MEM.wb_sel;
+            end
         end
     end
 
@@ -478,7 +495,18 @@ module riscv_core (
     //
     //////////////////////////////////////////////////////////////////////
 
-    riscv_decode decoder (
+    riscv_icache icache (
+        .clk_in(clk_in),
+        .rst_in(rst_in),
+        .annul_in(annul),
+        .pc_in(PC),
+        .instruction_out(if_instruction),
+        .cache_miss_out(if_cache_miss),
+        .imem_data_in(imem_data_in),
+        .imem_addr_out(imem_addr_out)
+    );
+
+    riscv_decode decode_unit (
         .inst_in(ID.instr),
         .rs1_out(id_rs1),
         .rs2_out(id_rs2),
@@ -511,7 +539,7 @@ module riscv_core (
         .reg_debug_out(reg_debug_out)
     );
 
-    riscv_alu alu (
+    riscv_alu alu_unit (
         .alu_func_in(EX.alu_func),
         .br_func_in(EX.br_func),
         .a_in(EX.a),
@@ -520,10 +548,9 @@ module riscv_core (
         .branch_taken_out(ex_br_taken)
     );
 
-    riscv_memory_iface dmem_iface (
+    riscv_dcache dcache (
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .step_in(cpu_step_in),
 
         .cpu_addr_in(MEM.addr),
         .cpu_data_in(MEM.alu_result),
@@ -531,7 +558,7 @@ module riscv_core (
         .cpu_read_enable_in(MEM.dmem_read_enable),
         .cpu_write_enable_in(MEM.dmem_write_enable),
         .cpu_data_out(mem_data_out),
-        .cpu_data_ready_out(mem_ready),
+        .cache_miss_out(mem_cache_miss),
 
         .mem_addr_out(dmem_addr_out),
         .mem_data_out(dmem_data_out),
@@ -539,3 +566,4 @@ module riscv_core (
         .mem_data_in(dmem_data_in)
     );
 endmodule
+`default_nettype wire

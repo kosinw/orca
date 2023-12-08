@@ -19,14 +19,14 @@ build:
 	cp bc/build.py build.py
 	./remote/r.py build.py build.tcl $(SOURCES)
 
-.PHONY: remote_tb
-remote_tb:
+.PHONY: test
+test:
 	rm -f build.py
 	cp bc/sim.py build.py
 	./remote/r.py build.py xsim_run.tcl $(SOURCES)
 	rm dump.tar.gz
-	mv dump.vcd vcd/remote_tb.vcd
-	open vcd/remote_tb.vcd
+	mv dump.vcd vcd/core_tb.vcd
+	open vcd/core_tb.vcd
 
 .PHONY: font
 font:
@@ -76,21 +76,6 @@ decode_tb:
 		hdl/riscv_decode.sv
 	vvp vcd/riscv_decode.out
 	open vcd/riscv_decode.vcd
-
-.PHONY: core_tb
-core_tb:
-	iverilog -g2012 -o 					\
-		vcd/riscv_core.out				\
-		sim/riscv_core_tb.sv			\
-		hdl/riscv_constants.sv			\
-		hdl/riscv_alu.sv				\
-		hdl/riscv_decode.sv				\
-		hdl/pipeline2.sv				\
-		hdl/riscv_memory_iface.sv		\
-		hdl/riscv_regfile.sv			\
-		hdl/riscv_core.sv
-	vvp vcd/riscv_core.out
-	open vcd/riscv_core.vcd
 
 .PHONY: alu_tb
 alu_tb:

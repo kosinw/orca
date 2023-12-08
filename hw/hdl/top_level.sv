@@ -31,8 +31,8 @@ module top_level(
 
     // clock domains
     logic clk_74mhz, clk_371mhz;         // 74.25 MHz hdmi clock and 371.25 MHz
-    logic clk_100mhz;
-    logic clk_50mhz;
+    logic clk_100mhz;                    // on board clock
+    logic clk_50mhz;                     // cpu clock
     logic locked_unused;                 // locked signal (unused)
     logic locked_unused2;
 
@@ -104,14 +104,14 @@ module top_level(
     logic cpu_halt;
 
     debouncer btn2_db (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .rst_in(sys_rst),
         .dirty_in(btn[3]),
         .clean_out(btn_db_out)
     );
 
     edge_detector btn2_det (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .level_in(btn_db_out),
         .level_out(btn2_press)
     );
@@ -120,7 +120,7 @@ module top_level(
     assign cpu_step = cpu_halt ? btn2_press : 1'b1;
 
     riscv_core core (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .rst_in(btn[1]),
         .cpu_step_in(cpu_step),
         .imem_data_in(instr),
@@ -141,7 +141,7 @@ module top_level(
     ////////////////////////////////////////////////////////////
 
     memory_controller memory_ctrl (
-        .clk_cpu_in(clk_100mhz),
+        .clk_cpu_in(clk_50mhz),
         .rst_in(sys_rst),
 
         .cpu_addr_in(cpu_addr_out),
@@ -169,7 +169,7 @@ module top_level(
     logic [31:0] data_memory_debug_data;
 
     program_ram data_memory (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .rst_in(sys_rst),
         .pc_in(pc),
         .instr_out(instr),
@@ -192,7 +192,7 @@ module top_level(
         .red_out(video_red),
         .green_out(video_green),
         .blue_out(video_blue),
-        .clk_cpu_in(clk_100mhz),
+        .clk_cpu_in(clk_50mhz),
         .cpu_addr_in(video_addr_in),
         .cpu_data_in(video_data_in),
         .cpu_write_enable_in(video_write_enable_in),
@@ -202,7 +202,7 @@ module top_level(
     logic [6:0] ss_c;
 
     seven_segment_controller mssc (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .rst_in(sys_rst),
         .val_in(cpu_debug_out),
         .cat_out(ss_c),

@@ -17,7 +17,6 @@ module core_tb;
 
     logic [31:0] cycle;
 
-
     xilinx_true_dual_port_read_first_2_clock_ram #(
         .RAM_WIDTH(32),
         .RAM_DEPTH(16384),
