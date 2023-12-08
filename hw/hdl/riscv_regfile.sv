@@ -4,7 +4,6 @@
 module riscv_regfile(
     input wire clk_in,
     input wire rst_in,
-    input wire step_in,
     input wire write_enable_in,
 
     input wire [4:0] ra_in,
@@ -32,7 +31,7 @@ module riscv_regfile(
         if (rst_in) begin
             for (integer i = 1; i < 32; i = i + 1)
                 registers[i] <= 32'b0;
-        end else if (step_in && write_enable_in && rd_in != 5'b0) begin
+        end else if (write_enable_in && rd_in != 5'b0) begin
             registers[rd_in] <= wd_in;
         end
     end

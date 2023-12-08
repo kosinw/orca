@@ -527,7 +527,6 @@ module riscv_core (
     riscv_regfile regfile (
         .clk_in(clk_in),
         .rst_in(rst_in),
-        .step_in(cpu_step_in),
         .ra_in(id_rs1),
         .rd1_out(id_rd1),
         .rb_in(id_rs2),

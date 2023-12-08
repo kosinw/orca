@@ -3,7 +3,7 @@
 void
 main(void)
 {
-    char *p = "Hello, world!";
+    char *p = "The quick brown fox jumped over the lazy dog.";
     int i;
 
     for (i = 0; *p != '\0'; i += 2)

@@ -27,7 +27,7 @@ module riscv_dcache (
 
     assign mem_addr_out = cpu_addr_in;
     assign cache_miss_out = !((state == WAIT2) || cache_hit);
-    assign cache_hit = (addr == cpu_addr_in && valid);
+    assign cache_hit = (addr == cpu_addr_in && valid) || !cpu_read_enable_in;
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
