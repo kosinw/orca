@@ -6,6 +6,7 @@
 module core_tb;
     logic clk_in;
     logic rst_in;
+    logic step_in;
 
     logic [31:0] imem_data_in;
     logic [31:0] imem_addr_out;
@@ -16,7 +17,6 @@ module core_tb;
     logic [31:0] dmem_data_in;
 
     logic [31:0] cycle;
-
 
     xilinx_true_dual_port_read_first_2_clock_ram #(
         .RAM_WIDTH(32),
@@ -55,7 +55,7 @@ module core_tb;
         .clk_in(clk_in),
         .rst_in(rst_in),
 
-        .cpu_step_in(1'b1),
+        .cpu_step_in(step_in),
 
         .imem_data_in(imem_data_in),
         .imem_addr_out(imem_addr_out),
@@ -69,6 +69,8 @@ module core_tb;
     always begin
         #5;
         clk_in = !clk_in;
+        // step_in = $random();
+        step_in = 1'b1;
     end
 
     always_ff @(posedge clk_in) begin
@@ -84,13 +86,14 @@ module core_tb;
         $dumpvars(0,core_tb);
         $display("Starting simulation...");
 
+        step_in = 0;
         clk_in = 0;
         rst_in = 1;
 
         #10;
         rst_in = 0;
 
-        #10_000;
+        #20_000;
 
         $display("Finishing simulation...");
         $finish;

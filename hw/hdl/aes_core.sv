@@ -7,7 +7,7 @@
 //
 // ======================================================================
 
-`timescale 1ns / 1ps 
+`timescale 1ns / 1ps
 `default_nettype none
 `include "hdl/aes_defs.sv"
 
@@ -68,7 +68,7 @@ module aes_core (
   assign valid = mode_in == `ENCRYPT ? valid_encrypt : valid_decrypt;
   assign valid_out = valid;
 
-  // assign the next_round flag and data_out output 
+  // assign the next_round flag and data_out output
   assign next_round = mode_in == `ENCRYPT ? next_round_encrypt : next_round_decrypt;
   assign data_out = mode_in == `ENCRYPT ? data_out_encrypt : data_out_decrypt;
 
