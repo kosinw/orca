@@ -21,10 +21,28 @@ module riscv_icache (
     // TTTTTTTTTIIIIIXX
     // FEDCBA9876543210
 
+
     logic [31:0] cache [0:SETS-1][0:WAYS-1];
     logic [ 8:0] tags  [0:SETS-1][0:WAYS-1];
     logic        valid [0:SETS-1][0:WAYS-1];
     logic [31:0] lru;
+
+`ifndef TOPLEVEL
+    genvar set;
+    genvar way;
+
+    generate
+        for (set = 0; set < SETS; set = set + 1) begin
+            for (way = 0; way < WAYS; way = way + 1) begin
+                logic [31:0]    DEBUG_CACHE;
+                logic [ 8:0]    DEBUG_TAG;
+
+                assign DEBUG_CACHE    = cache[set][way];
+                assign DEBUG_TAG      = tags[set][way];
+            end
+        end
+    endgenerate
+`endif
 
     logic [ 4:0]    set_idx;
     logic           way_idx;

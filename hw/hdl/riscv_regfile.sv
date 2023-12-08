@@ -27,6 +27,17 @@ module riscv_regfile(
     // always set to 0
     initial registers[0] = 32'b0;
 
+`ifndef TOPLEVEL
+    genvar i;
+
+    generate
+        for (i = 1; i < 32; i = i + 1) begin
+            logic [31:0]    REGISTER;
+            assign REGISTER = registers[i];
+        end
+    endgenerate
+`endif
+
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             for (integer i = 1; i < 32; i = i + 1)

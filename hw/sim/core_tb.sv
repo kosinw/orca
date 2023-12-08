@@ -69,7 +69,8 @@ module core_tb;
     always begin
         #5;
         clk_in = !clk_in;
-        step_in = $random();
+        // step_in = $random();
+        step_in = 1'b1;
     end
 
     always_ff @(posedge clk_in) begin
@@ -92,7 +93,7 @@ module core_tb;
         #10;
         rst_in = 0;
 
-        #10_000;
+        #20_000;
 
         $display("Finishing simulation...");
         $finish;

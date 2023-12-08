@@ -21,6 +21,7 @@ build:
 
 .PHONY: test
 test:
+	util/program.py programs/helloworld3.bin data/program.mem
 	rm -f build.py
 	cp bc/sim.py build.py
 	./remote/r.py build.py xsim_run.tcl $(SOURCES)
@@ -35,10 +36,6 @@ font:
 .PHONY: text
 text:
 	util/text.py data/initial_video_bram.mem
-
-.PHONY: program
-program:
-	util/program.py data/program.bin data/program.mem
 
 .PHONY: video_tb
 video_tb:
