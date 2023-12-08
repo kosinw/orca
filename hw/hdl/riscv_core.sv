@@ -76,6 +76,7 @@ module riscv_core (
     WritebackState          WB;
 
     // ID stage combinational signals
+    logic       if_ready;
     logic [4:0] id_rs1, id_rs2, id_rd;
     logic [31:0] id_rd1, id_rd2;
     logic [31:0] id_imm;
@@ -537,5 +538,4 @@ module riscv_core (
         .mem_write_enable(dmem_write_enable_out),
         .mem_data_in(dmem_data_in)
     );
-
 endmodule

@@ -1,6 +1,6 @@
-`timescale 1ns / 1ps 
+`timescale 1ns / 1ps
 `default_nettype none
-`include "hdl/aes/aes_defs.sv"
+`include "hdl/aes_defs.sv"
 
 module aes_encryption (
     // Default inputs
@@ -18,7 +18,7 @@ module aes_encryption (
 
     input wire [3:0] round_in,
 
-    // Data ouput 
+    // Data ouput
     output logic next_round_out,
     output logic [127:0] data_out,
     output logic valid_out
@@ -54,7 +54,7 @@ module aes_encryption (
   // );
 
   /********************************************
-  * Functions to handle mix columns operation * 
+  * Functions to handle mix columns operation *
   ********************************************/
 
   function [7:0] gm2(input [7:0] val);
@@ -176,9 +176,9 @@ module aes_encryption (
                 end
                 `SHIFT_ROWS: begin
                   temp_data <= {
-                    c0,  c1,  c2,  c3, 
-                    c5,  c6,  c7,  c4, 
-                    c10, c11, c8,  c9, 
+                    c0,  c1,  c2,  c3,
+                    c5,  c6,  c7,  c4,
+                    c10, c11, c8,  c9,
                     c15, c12, c13, c14
                   };
                   if (round == `ROUND_10) begin
@@ -189,9 +189,9 @@ module aes_encryption (
                 end
                 `MIX_COLUMNS: begin
                   temp_data <= {
-                    m0,  m1,  m2,  m3, 
-                    m4,  m5,  m6,  m7, 
-                    m8,  m9,  m10, m11, 
+                    m0,  m1,  m2,  m3,
+                    m4,  m5,  m6,  m7,
+                    m8,  m9,  m10, m11,
                     m12, m13, m14, m15
                   };
                   stage <= `ADD_ROUND_KEY;

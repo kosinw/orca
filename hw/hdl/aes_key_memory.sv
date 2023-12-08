@@ -1,5 +1,5 @@
 `default_nettype none
-`include "hdl/aes/aes_defs.sv"
+`include "hdl/aes_defs.sv"
 
 module aes_key_memory (
     input wire clk_in,
@@ -13,10 +13,10 @@ module aes_key_memory (
   logic [3:0] round;
   logic key_expanding;
   logic [127:0] key_memory [10:0];
-  
+
   logic [127:0] temp_key, temp_next_key, temp_key_rd_out;
   assign key_out = temp_key_rd_out;
-  
+
   aes_key_schedule aes_key_schedule(
     .round_in(round),
     .key_in(temp_key),

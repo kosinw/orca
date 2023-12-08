@@ -1,6 +1,6 @@
-`timescale 1ns / 1ps 
+`timescale 1ns / 1ps
 `default_nettype none
-`include "hdl/aes/aes_defs.sv"
+`include "hdl/aes_defs.sv"
 
 module aes_core (
     // Default inputs
@@ -86,7 +86,7 @@ module aes_core (
     end
     if (valid) begin
       round = `ROUND_INIT;
-    end 
+    end
   end
 
   always_ff @(posedge clk_in) begin
