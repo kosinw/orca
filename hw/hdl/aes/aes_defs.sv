@@ -20,3 +20,7 @@
 `define INV_SUB_BYTES     3'd5
 `define INV_SHIFT_ROWS    3'd6
 `define INV_MIX_COLUMNS   3'd7
+
+// AES Mode
+`define ENCRYPT           1'b1
+`define DECRYPT           1'b0
