@@ -4,13 +4,13 @@ void
 main(void)
 {
     char *p = "The quick brown fox jumped over the lazy dog.";
-    char *w = "Hello, world. This is a test message.s";
+    char *w = "Hello, world. This is a test message.";
 
-    // for (int i = 0; i < 160*2; i += 2)
-    // {
-    //     *((volatile char*)(0x20000 + i)) = '\x00';
-    //     *((volatile char*)(0x20001 + i)) = '\x00';
-    // }
+    for (int i = 0; i < 160*2*45; i += 2)
+    {
+        *((volatile char*)(0x20000 + i)) = '\x00';
+        *((volatile char*)(0x20001 + i)) = '\x00';
+    }
 
     for (int i = 0; *p != '\0'; i += 2)
     {

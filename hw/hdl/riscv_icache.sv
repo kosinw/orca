@@ -62,6 +62,8 @@ module riscv_icache (
         set_idx = pc_in[6:2];
         tag = pc_in[15:7];
 
+        which_hit = 1'b0;
+
         // Check if current PC is available in way 0
         if (valid[set_idx][0] && tags[set_idx][0] == tag) begin
             cache_hit = 1'b1;
@@ -69,7 +71,7 @@ module riscv_icache (
             which_hit = 1'b0;
         end else if (valid[set_idx][1] && tags[set_idx][1] == tag) begin
             cache_hit = 1'b1;
-            instruction_data = cache[set_idx][0];
+            instruction_data = cache[set_idx][1];
             which_hit = 1'b1;
         end else begin
             cache_hit = 1'b0;
