@@ -1,5 +1,5 @@
 `default_nettype none
-`include "hdl/aes/aes_defs.sv"
+`include "hdl/aes_defs.sv"
 
 module aes_key_memory (
     input wire clk_in,
