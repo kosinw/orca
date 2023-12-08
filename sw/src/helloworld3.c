@@ -1,18 +1,16 @@
 #include <runtime.h>
 
-char *HELLO_WORLD = "Hello, world!";
-
 void
 main(void)
 {
-    char *p;
+    char *p = "Hello, world!";
     int i;
-    int x = 1;
 
-    for (i = 0, p = HELLO_WORLD; *p != '\0'; i += 2, p++)
+    for (i = 0; *p != '\0'; i += 2)
     {
         *((volatile char*)(0x20000 + i)) = *p;
-        *((volatile char*)(0x20140 + i)) = x;
-        x = x * i;
+        p++;
     }
+
+    *((volatile char*)(0x20142)) = ((i*i) + '0');
 }

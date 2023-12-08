@@ -25,7 +25,7 @@ all: $(BINFILES)
 build/%.bin: build/obj/%.elf
 	mkdir -p "$$(dirname $@)"
 	$(OBJCOPY) -O binary -I elf32-littleriscv $< $@
-	$(OBJDUMP) -D $< -M numeric > $<.S
+	$(OBJDUMP) -D $< > $<.S
 
 # Compilation rule for .elf files
 build/obj/%.elf: build/obj/%.S.o linker.ld

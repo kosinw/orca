@@ -4,8 +4,6 @@
 `include "hdl/riscv_constants.sv"
 
 module core_tb;
-    // reg [31:0] INSTRUCTIONS [0:16383];
-
     logic clk_in;
     logic rst_in;
 
@@ -16,6 +14,8 @@ module core_tb;
     logic [31:0] dmem_data_out;
     logic [3:0] dmem_write_enable_out;
     logic [31:0] dmem_data_in;
+
+    logic [31:0] cycle;
 
 
     xilinx_true_dual_port_read_first_2_clock_ram #(
@@ -29,9 +29,26 @@ module core_tb;
         .clka(clk_in),
         .wea(1'b0),
         .ena(1'b1),
-        .rsta(rst_in),
+        .rsta(1'b0),
         .regcea(1'b1),
         .douta(imem_data_in)
+    );
+
+    xilinx_true_dual_port_read_first_byte_write_2_clock_ram #(
+        .NB_COL(4),
+        .COL_WIDTH(8),
+        .RAM_DEPTH(16384),
+        .RAM_PERFORMANCE("HIGH_PERFORMANCE"),
+        .INIT_FILE("data/program.mem")
+    ) dmem (
+        .addrb(dmem_addr_out[15:2]),
+        .dinb(dmem_data_out),
+        .clkb(clk_in),
+        .web(dmem_write_enable_out),
+        .enb(1'b1),
+        .rstb(1'b0),
+        .regceb(1'b1),
+        .doutb(dmem_data_in)
     );
 
     riscv_core uut (
@@ -46,15 +63,20 @@ module core_tb;
         .dmem_addr_out(dmem_addr_out),
         .dmem_data_out(dmem_data_out),
         .dmem_write_enable_out(dmem_write_enable_out),
-        .dmem_data_in(dmem_data_in),
-
-        .debug_in(8'b10000000),
-        .debug_out()
+        .dmem_data_in(dmem_data_in)
     );
 
     always begin
         #5;
         clk_in = !clk_in;
+    end
+
+    always_ff @(posedge clk_in) begin
+        if (rst_in) begin
+            cycle <= 0;
+        end else begin
+            cycle <= cycle + 1;
+        end
     end
 
     initial begin
@@ -64,12 +86,11 @@ module core_tb;
 
         clk_in = 0;
         rst_in = 1;
-        dmem_data_in = 32'hDEADBEEF;
 
-        #25;
+        #10;
         rst_in = 0;
 
-        #800;
+        #10_000;
 
         $display("Finishing simulation...");
         $finish;

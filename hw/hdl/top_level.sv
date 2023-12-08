@@ -24,7 +24,6 @@ module top_level(
     // turn off bright LEDs
     assign rgb1 = 0;
     assign rgb0 = 0;
-    assign led = sw;
 
     // have btn[0] control resetting system
     logic sys_rst;
@@ -105,24 +104,24 @@ module top_level(
     logic cpu_halt;
 
     debouncer btn2_db (
-        .clk_in(clk_50mhz),
+        .clk_in(clk_100mhz),
         .rst_in(sys_rst),
         .dirty_in(btn[3]),
         .clean_out(btn_db_out)
     );
 
     edge_detector btn2_det (
-        .clk_in(clk_50mhz),
+        .clk_in(clk_100mhz),
         .level_in(btn_db_out),
         .level_out(btn2_press)
     );
 
-    assign cpu_halt = sw[14];
+    assign cpu_halt = sw[15];
     assign cpu_step = cpu_halt ? btn2_press : 1'b1;
 
     riscv_core core (
-        .clk_in(clk_50mhz),
-        .rst_in(btn[1] || sys_rst),
+        .clk_in(clk_100mhz),
+        .rst_in(btn[1]),
         .cpu_step_in(cpu_step),
         .imem_data_in(instr),
         .imem_addr_out(pc),
@@ -131,7 +130,8 @@ module top_level(
         .dmem_write_enable_out(cpu_write_enable_out),
         .dmem_data_in(cpu_data_in),
         .debug_in(sw[7:0]),
-        .debug_out(cpu_debug_out)
+        .debug_out(cpu_debug_out),
+        .led_out(led)
     );
 
     ////////////////////////////////////////////////////////////
@@ -141,7 +141,7 @@ module top_level(
     ////////////////////////////////////////////////////////////
 
     memory_controller memory_ctrl (
-        .clk_cpu_in(clk_50mhz),
+        .clk_cpu_in(clk_100mhz),
         .rst_in(sys_rst),
 
         .cpu_addr_in(cpu_addr_out),
@@ -169,7 +169,7 @@ module top_level(
     logic [31:0] data_memory_debug_data;
 
     program_ram data_memory (
-        .clk_in(clk_50mhz),
+        .clk_in(clk_100mhz),
         .rst_in(sys_rst),
         .pc_in(pc),
         .instr_out(instr),
@@ -192,7 +192,7 @@ module top_level(
         .red_out(video_red),
         .green_out(video_green),
         .blue_out(video_blue),
-        .clk_cpu_in(clk_50mhz),
+        .clk_cpu_in(clk_100mhz),
         .cpu_addr_in(video_addr_in),
         .cpu_data_in(video_data_in),
         .cpu_write_enable_in(video_write_enable_in),
@@ -202,7 +202,7 @@ module top_level(
     logic [6:0] ss_c;
 
     seven_segment_controller mssc (
-        .clk_in(clk_50mhz),
+        .clk_in(clk_100mhz),
         .rst_in(sys_rst),
         .val_in(cpu_debug_out),
         .cat_out(ss_c),
