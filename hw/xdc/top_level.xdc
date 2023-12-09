@@ -130,7 +130,7 @@ set_property -dict { PACKAGE_PIN R14   IOSTANDARD TMDS_33  } [get_ports {hdmi_tx
 #set_property PACKAGE_PIN B14 [ get_ports "spkr"]
 #set_property IOSTANDARD LVCMOS33 [ get_ports "spk*"]
 
-# uart pins for working with manta:
+# uart pins:
 set_property PACKAGE_PIN B16 [ get_ports "uart_rxd"]
 set_property PACKAGE_PIN A16 [ get_ports "uart_txd"]
 set_property IOSTANDARD LVCMOS33 [ get_ports "uart*"]
