@@ -31,9 +31,9 @@ module riscv_regfile(
     genvar i;
 
     generate
-        for (i = 1; i < 32; i = i + 1) begin
-            logic [31:0]    REGISTER;
-            assign REGISTER = registers[i];
+        for (i = 0; i < 32; i = i + 1) begin: X
+            logic [31:0]    REG;
+            assign REG = registers[i];
         end
     endgenerate
 `endif

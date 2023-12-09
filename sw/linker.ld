@@ -27,13 +27,10 @@ SECTIONS
   }
   . = ALIGN(32);
 
-    /DISCARD/ : {
-        *(.riscv.attributes)
-        *(.eh_frame_hdr)
-        *(.eh_frame)
-        *(.comment)
-    }
-
-  . = 0x00010000;
-  PROVIDE(__stack0 = .);
+  /DISCARD/ : {
+      *(.riscv.attributes)
+      *(.eh_frame_hdr)
+      *(.eh_frame)
+      *(.comment)
+  }
 }

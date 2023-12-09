@@ -1,4 +1,8 @@
 .section .text.boot
+
+.globl __stack0
+.equ __stack0, 0xffff
+
 .globl _start
 _start:
     la sp, __stack0

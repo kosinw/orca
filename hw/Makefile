@@ -21,7 +21,7 @@ build:
 
 .PHONY: test
 test:
-	util/program.py programs/helloworld3.bin data/program.mem
+	util/program.py programs/quicksort.bin data/program.mem
 	rm -f build.py
 	cp bc/sim.py build.py
 	./remote/r.py build.py xsim_run.tcl $(SOURCES)
