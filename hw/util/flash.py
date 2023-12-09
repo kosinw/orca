@@ -18,10 +18,15 @@ if __name__ == "__main__":
 
     chunks = [binary_data[i:i+4] for i in range(0, len(binary_data), 4)]
 
-    print(f"sending '{input_file}' to orca computer...")
+    print(f"uploading '{input_file}' to microcomputer...")
     time.sleep(1)
 
     with serial.Serial(PORT, BAUDRATE) as uart:
+        # Send halt signal.
+        uart.write(b"H\r\n")
+        time.sleep(0.01)
+
+        # Send program memory.
         for i in range(len(chunks)):
             addr = struct.pack("<I", i*4)
             data = chunks[i].ljust(4, b"\x00")
@@ -29,6 +34,11 @@ if __name__ == "__main__":
             message = b"".join([b"W", addr, data, b"\r\n"])
             uart.write(message)
             time.sleep(0.01)
+
+        # Send reset and start signal.
+        uart.write(b"R\r\n")
+        time.sleep(0.01)
+        uart.write(b"S\r\n")
 
 
     print("done!")

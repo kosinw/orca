@@ -211,30 +211,34 @@ module riscv_core (
     //////////////////////////////////////////////////////////////////////
 
     always_comb begin
-        reg_debug_in = debug_in[14:11];
+        reg_debug_in = debug_in[14:10];
         case (debug_in[3:0])
             4'b0000:     debug_out = ID.pc;
             4'b0001:     debug_out = ID.instr;
             4'b0010:     debug_out = reg_debug_out;
-            4'b0011:     debug_out = MEM.addr;
-            4'b0100:     debug_out = MEM.alu_result;
+            4'b0011:     debug_out = dmem_addr_out;
+            4'b0100:     debug_out = dmem_data_out;
             4'b0101:     debug_out = dmem_data_in;
             4'b0110:     debug_out = wb_data;
-            4'b0111:     debug_out = WB.pc;
+
+            4'b1000:     debug_out = PC;
+            4'b1001:     debug_out = ID.pc;
+            4'b1010:     debug_out = EX.pc;
+            4'b1011:     debug_out = MEM.pc;
+            4'b1100:     debug_out = WB.pc;
             default:     debug_out = 32'hDEADBEEF;
         endcase
 
-        led_out[15] = if_stall;
-        led_out[14] = id_stall;
-        led_out[13] = ex_stall;
-        led_out[12] = mem_stall;
-        led_out[11] = wb_stall;
+        led_out[15] = cpu_step_in;
+        led_out[14] = rst_in;
 
-        led_out[ 0] = bypass;
-        led_out[ 1] = annul;
-        led_out[ 2] = WB.werf;
-        led_out[ 3] = MEM.dmem_read_enable;
-        led_out[ 4] = MEM.dmem_write_enable;
+        led_out[13] = if_stall;
+        led_out[12] = id_stall;
+        led_out[11] = ex_stall;
+        led_out[10] = mem_stall;
+        led_out[ 9] = wb_stall;
+        led_out[ 8] = bypass;
+        led_out[ 7] = annul;
     end
 
     //////////////////////////////////////////////////////////////////////

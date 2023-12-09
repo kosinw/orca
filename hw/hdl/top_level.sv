@@ -9,7 +9,6 @@ module top_level(
     input wire [3:0] btn,
     input wire [2:0] pmodb,
     input wire uart_rxd,
-    output logic uart_txd,
     output logic [15:0] led,
     output logic [2:0] hdmi_tx_p,           // hdmi output signals (blue, green, red)
     output logic [2:0] hdmi_tx_n,           // hdmi output signals (negatives)
@@ -47,6 +46,22 @@ module top_level(
     // cpu
     logic [31:0] pc;
     logic [31:0] instr;
+
+    // uart
+    logic [7:0] urx_brx_data;
+    logic urx_brx_valid;
+
+    logic urx_halt;
+    logic urx_reset;
+    logic urx_start;
+
+    logic [31:0] brx_mem_addr;
+    logic [31:0] brx_mem_data;
+    logic brx_mem_valid;
+
+    logic brx_cpu_hlt;
+    logic brx_cpu_rst;
+    logic brx_cpu_start;
 
     // data bus
     logic [31:0] cpu_addr_out;
@@ -97,31 +112,32 @@ module top_level(
     //
     ////////////////////////////////////////////////////////////
 
-    // halting mode
     logic cpu_step;
     logic btn_db_out;
     logic btn2_press;
     logic cpu_halt;
 
-    debouncer btn2_db (
-        .clk_in(clk_50mhz),
-        .rst_in(sys_rst),
-        .dirty_in(btn[3]),
-        .clean_out(btn_db_out)
-    );
+    enum { HALT, RUN } cpu_state;
 
-    edge_detector btn2_det (
-        .clk_in(clk_50mhz),
-        .level_in(btn_db_out),
-        .level_out(btn2_press)
-    );
+    initial cpu_state = HALT;
 
-    assign cpu_halt = sw[15];
+    always_ff @(posedge clk_50mhz) begin
+        if (brx_cpu_start) begin
+            cpu_state <= RUN;
+        end else if (brx_cpu_hlt) begin
+            cpu_state <= HALT;
+        end
+    end
+
+    debouncer       btn2_db (.clk_in(clk_50mhz), .rst_in(sys_rst), .dirty_in(btn[3]), .clean_out(btn_db_out));
+    edge_detector   btn2_det (.clk_in(clk_50mhz), .level_in(btn_db_out), .level_out(btn2_press));
+
+    assign cpu_halt = (cpu_state == HALT) || sw[15];
     assign cpu_step = cpu_halt ? btn2_press : 1'b1;
 
     riscv_core core (
         .clk_in(clk_50mhz),
-        .rst_in(btn[1]),
+        .rst_in(btn[1] || brx_cpu_rst),
         .cpu_step_in(cpu_step),
         .imem_data_in(instr),
         .imem_addr_out(pc),
@@ -129,7 +145,7 @@ module top_level(
         .dmem_data_out(cpu_data_out),
         .dmem_write_enable_out(cpu_write_enable_out),
         .dmem_data_in(cpu_data_in),
-        .debug_in(sw[7:0]),
+        .debug_in(sw[15:0]),
         .debug_out(cpu_debug_out),
         .led_out(led)
     );
@@ -165,21 +181,40 @@ module top_level(
         .keyboard_data_in()
     );
 
-    logic data_memory_debug_valid;
-    logic [31:0] data_memory_debug_data;
+    uart_rx #(.CLOCKS_PER_BAUD(17)) urx (
+        .clk(clk_50mhz),
+        .rx(uart_rxd),
+        .data_o(urx_brx_data),
+        .valid_o(urx_brx_valid)
+    );
 
-    program_ram data_memory (
+    ram_bridge_rx brx (
+        .clk_in(clk_50mhz),
+        .data_in(urx_brx_data),
+        .valid_in(urx_brx_valid),
+        .addr_out(brx_mem_addr),
+        .data_out(brx_mem_data),
+        .valid_out(brx_mem_valid),
+        .halt_out(brx_cpu_hlt),
+        .reset_out(brx_cpu_rst),
+        .start_out(brx_cpu_start)
+    );
+
+    program_ram program_memory (
         .clk_in(clk_50mhz),
         .rst_in(sys_rst),
+
         .pc_in(pc),
         .instr_out(instr),
+
         .cpu_addr_in(ram_addr_in),
         .cpu_data_in(ram_data_in),
         .cpu_write_enable_in(ram_write_enable_in),
         .cpu_data_out(ram_data_out),
-        .uart_rx_in(uart_rxd),
-        .debug_data_out(data_memory_debug_data),
-        .debug_valid_out(data_memory_debug_valid)
+
+        .brx_addr_in(brx_mem_addr),
+        .brx_data_in(brx_mem_data),
+        .brx_valid_in(brx_mem_valid)
     );
 
     video_controller mvc (
