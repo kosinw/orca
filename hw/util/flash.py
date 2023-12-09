@@ -26,6 +26,10 @@ if __name__ == "__main__":
         uart.write(b"H\r\n")
         time.sleep(0.01)
 
+        # Send reset signal.
+        uart.write(b"R\r\n")
+        time.sleep(0.01)
+
         # Send program memory.
         for i in range(len(chunks)):
             addr = struct.pack("<I", i*4)

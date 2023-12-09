@@ -15,6 +15,10 @@ module ram_bridge_rx (
     output logic reset_out,
     output logic start_out
 );
+    enum { IDLE, WRITE, RESET, HALT, START } state;
+    logic [7:0] buffer [7:0];
+    logic [3:0] byte_num;
+
     initial addr_out = 0;
     initial data_out = 0;
     initial valid_out = 0;
@@ -22,12 +26,6 @@ module ram_bridge_rx (
     assign halt_out = (state == HALT);
     assign start_out = (state == START);
     assign reset_out = (state == RESET);
-
-    logic [7:0] buffer [7:0];
-
-    enum { IDLE, WRITE, RESET, HALT, START } state;
-
-    logic [3:0] byte_num;
 
     always_ff @(posedge clk_in) begin
         if (state == IDLE) begin
