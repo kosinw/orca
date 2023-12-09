@@ -133,7 +133,11 @@ module top_level(
     edge_detector   btn2_det (.clk_in(clk_50mhz), .level_in(btn_db_out), .level_out(btn2_press));
 
     assign cpu_halt = (cpu_state == HALT) || sw[15];
-    assign cpu_step = cpu_halt ? btn2_press : 1'b1;
+    initial cpu_step = 1'b0;
+
+    always_ff @(posedge clk_100mhz) begin
+        cpu_step <= cpu_halt ? btn2_press : 1'b1;
+    end
 
     riscv_core core (
         .clk_in(clk_50mhz),
