@@ -259,13 +259,13 @@ module riscv_core (
     assign ltu_hazard_rs1 = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs1) || (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs1));
     assign ltu_hazard_rs2 = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs2) || (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs2));
 
-    assign ltu_hazard     = ltu_hazard_rs1 || ltu_hazard_rs2;
+    assign ltu_hazard   = ltu_hazard_rs1 || ltu_hazard_rs2;
 
     assign if_stall     = ltu_hazard || if_cache_miss || mem_cache_miss;
     assign id_stall     = ltu_hazard || mem_cache_miss;
     assign ex_stall     = mem_cache_miss;
     assign mem_stall    = mem_cache_miss;
-    assign wb_stall     = mem_cache_miss;
+    assign wb_stall     = 1'b0;
 
     // Read-after-write hazard is active when:
     //  - The incident register cannot be x0
@@ -451,7 +451,13 @@ module riscv_core (
             MEM <= '0;
             mem_new_request <= 0;
         end else if (cpu_step_in) begin
-            if (!mem_stall) begin
+            if (mem_stall) begin
+                MEM <= MEM;
+                mem_new_request <= 0;
+            end else if (ex_stall) begin
+                MEM <= '0;
+                mem_new_request <= 0;
+            end else begin
                 MEM.pc <= EX.pc;
                 MEM.rd <= EX.rd;
                 MEM.alu_result <= ex_alu_result;
@@ -462,8 +468,6 @@ module riscv_core (
                 MEM.dmem_read_enable <= EX.dmem_read_enable;
                 MEM.dmem_write_enable <= EX.dmem_write_enable;
                 mem_new_request <= 1;
-            end else begin
-                mem_new_request <= 0;
             end
         end
     end
@@ -478,7 +482,11 @@ module riscv_core (
         if (rst_in) begin
             WB <= '0;
         end else if (cpu_step_in) begin
-            if (!wb_stall) begin
+            if (wb_stall) begin
+                WB <= WB;
+            end else if (mem_stall) begin
+                WB <= '0;
+            end else begin
                 WB.pc <= MEM.pc;
                 WB.rd <= MEM.rd;
                 WB.result <= MEM.alu_result;
