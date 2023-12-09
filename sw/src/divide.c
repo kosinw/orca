@@ -59,20 +59,20 @@ printint(int xx, int base, int sign)
 void
 main(void)
 {
-    int multiplicands[] = {90, 72, 42, 55, 12, 34};
-    int multipliers[]  = {11, 10, 9, 8, 2, 3, 5, 6};
+    int dividends[] = {90, 72, 42, 55, 12, 34};
+    int divisors[]  = {11, 10, 9, 8, 2, 3, 5, 6};
 
     for (int r = 0; r < 45; r++) {
         for (int c = 0; c < 160; c++) {
             putchar(r, c, '\x00');
-            putcolor(r, c, '\x9f');
+            putcolor(r, c, '\x1f');
         }
     }
 
     for (int repeat = 0; repeat < 100; repeat++) {
-        for (int i = 0; i < sizeof(multiplicands) / sizeof(int); i++) {
-            for (int j = 0; j < sizeof(multipliers) / sizeof(int); j++) {
-                printint(multiplicands[i] * multipliers[j], 10, 0);
+        for (int i = 0; i < sizeof(dividends) / sizeof(int); i++) {
+            for (int j = 0; j < sizeof(divisors) / sizeof(int); j++) {
+                printint(dividends[i] / divisors[j], 10, 0);
                 putc(' ');
             }
         }

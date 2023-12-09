@@ -21,10 +21,11 @@ module riscv_alu (
     logic signed [31:0] b_sign;
     logic        [31:0] quot_buffer;
     logic        [31:0] rem_buffer;
-    logic        [63:0] wide_result;
-    logic signed [63:0] wide_result_sign;
+    logic        [63:0] product;
+    logic signed [63:0] product_sign;
 
     logic               division_finished;
+    logic               divider_error;
     logic               divider_unit_finished;
 
     assign a_sign = a_in;
@@ -67,32 +68,32 @@ module riscv_alu (
                 endcase
             end
             `ALU_FUNC_MUL: begin
-                wide_result = a_in * b_in;
-                result_out = wide_result[31:0];
+                product = a_in * b_in;
+                result_out = product[31:0];
             end
             `ALU_FUNC_MULH: begin
-                wide_result_sign = a_sign * b_sign;
-                result_out = wide_result_sign[63:32];
+                product_sign = a_sign * b_sign;
+                result_out = product_sign[63:32];
             end
             `ALU_FUNC_MULHSU: begin
-                wide_result_sign = a_sign * b_in;
-                result_out = wide_result_sign[63:32];
+                product_sign = $signed(a_sign) * $unsigned(b_in);
+                result_out = product_sign[63:32];
             end
             `ALU_FUNC_MULHU: begin
-                wide_result = a_in * b_in;
-                result_out = wide_result[63:32];
+                product = a_in * b_in;
+                result_out = product[63:32];
             end
             `ALU_FUNC_DIV: begin
-                result_out = quot_buffer;   // TODO(kosinw): Change bits depending on [31]
+                result_out = (divider_error) ? 32'hffffffff : quot_buffer;   // TODO(kosinw): Change bits depending on [31]
             end
             `ALU_FUNC_DIVU: begin
-                result_out = quot_buffer;
+                result_out = (divider_error) ? 32'hffffffff : quot_buffer;
             end
             `ALU_FUNC_REM: begin
-                result_out = rem_buffer;  // TODO(kosinw): Change bits depending on [31]
+                result_out = (divider_error) ? 32'hffffffff : rem_buffer;   // TODO(kosinw): Change bits depending on [31]
             end
             `ALU_FUNC_REMU: begin
-                result_out = rem_buffer;
+                result_out = (divider_error) ? a_in : rem_buffer;
             end
             default:            result_out = `ZERO;
         endcase
@@ -110,7 +111,7 @@ module riscv_alu (
         end
     end
 
-    divider divider_unit (
+    divider2 divider_unit (
         .clk_in(clk_in),
         .rst_in(rst_in),
         .dividend_in(a_in),
@@ -119,82 +120,7 @@ module riscv_alu (
         .quotient_out(quot_buffer),
         .remainder_out(rem_buffer),
         .data_valid_out(divider_unit_finished),
-        .error_out(),
+        .error_out(divider_error),
         .busy_out()
     );
-endmodule
-
-module divider (
-    input  wire clk_in,
-    input  wire rst_in,
-    input  wire [31:0] dividend_in,
-    input  wire [31:0] divisor_in,
-    input  wire data_valid_in,
-    output logic [31:0] quotient_out,
-    output logic [31:0] remainder_out,
-    output logic data_valid_out,
-    output logic error_out,
-    output logic busy_out
-);
-  localparam RESTING = 0;
-  localparam DIVIDING = 1;
-
-  logic [31:0] quotient, dividend;
-  logic [31:0] divisor;
-  logic state;
-
-  always_ff @(posedge clk_in)begin
-    if (rst_in)begin
-      quotient <= 0;
-      dividend <= 0;
-      divisor <= 0;
-      remainder_out <= 0;
-      busy_out <= 1'b0;
-      error_out <= 1'b0;
-      state <= RESTING;
-      data_valid_out <= 1'b0;
-    end else begin
-      case (state)
-        RESTING: begin
-          if (data_valid_in)begin
-            state <= DIVIDING;
-            quotient <= 0;
-            dividend <= dividend_in;
-            divisor <= divisor_in;
-            busy_out <= 1'b1;
-            error_out <= 1'b0;
-          end
-          data_valid_out <= 1'b0;
-        end
-        DIVIDING: begin
-          if (dividend<=0)begin
-            state <= RESTING;
-            remainder_out <= dividend;
-            quotient_out <= quotient;
-            busy_out <= 1'b0;
-            error_out <= 1'b0;
-            data_valid_out <= 1'b1;
-          end else if (divisor==0)begin
-            state <= RESTING;
-            remainder_out <= 0;
-            quotient_out <= 0;
-            busy_out <= 1'b0;
-            error_out <= 1'b1;
-            data_valid_out <= 1'b1;
-          end else if (dividend < divisor) begin
-            state <= RESTING;
-            remainder_out <= dividend;
-            quotient_out <= quotient;
-            busy_out <= 1'b0;
-            error_out <= 1'b0;
-            data_valid_out <= 1'b1;
-          end else begin
-            state <= DIVIDING;
-            quotient <= quotient + 1'b1;
-            dividend <= dividend-divisor;
-          end
-        end
-      endcase
-    end
-  end
 endmodule

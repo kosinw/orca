@@ -4,7 +4,7 @@ void
 main(void)
 {
     char *p = "The quick brown fox jumped over the lazy dog.";
-    char *w = "Hello, world. This is a test message.";
+    char *w = "THE QUICK BROWN FOX JUMPED OVER THE LAZY DOG!";
 
     for (int i = 0; i < 160*2*45; i += 2)
     {
