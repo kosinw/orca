@@ -3,7 +3,7 @@
 
 `include "hdl/riscv_constants.sv"
 
-module riscv_dcache (
+module riscv_lsu (
     input wire clk_in,
     input wire rst_in,
 

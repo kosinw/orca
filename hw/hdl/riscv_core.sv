@@ -564,7 +564,7 @@ module riscv_core (
         .branch_taken_out(ex_br_taken)
     );
 
-    riscv_dcache dcache (
+    riscv_lsu lsu (
         .clk_in(clk_in),
         .rst_in(rst_in),
 
