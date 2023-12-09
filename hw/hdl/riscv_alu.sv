@@ -90,7 +90,7 @@ module riscv_alu (
                 result_out = (divider_error) ? 32'hffffffff : quot_buffer;
             end
             `ALU_FUNC_REM: begin
-                result_out = (divider_error) ? 32'hffffffff : rem_buffer;   // TODO(kosinw): Change bits depending on [31]
+                result_out = (divider_error) ? a_in : rem_buffer;   // TODO(kosinw): Change bits depending on [31]
             end
             `ALU_FUNC_REMU: begin
                 result_out = (divider_error) ? a_in : rem_buffer;

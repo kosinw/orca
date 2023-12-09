@@ -5,7 +5,7 @@
 
 .globl _start
 _start:
-    la sp, __stack0
-    call main
-spin:
-    j spin
+    la      sp, __stack0
+    call    main
+1:
+    j       1b

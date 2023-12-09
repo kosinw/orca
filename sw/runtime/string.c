@@ -48,7 +48,6 @@ memmove(void *dst, const void *src, unsigned n)
   return dst;
 }
 
-// memcpy exists to placate GCC.  Use memmove.
 void*
 memcpy(void *dst, const void *src, unsigned n)
 {

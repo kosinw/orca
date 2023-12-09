@@ -1,6 +1,4 @@
-#include <runtime.h>
-
-#define VIDEO_RAM       0x20000
+#define VIDEO_RAM       0x000020000
 
 static char digits[] = "0123456789abcdef";
 static int r = 0;
@@ -9,15 +7,15 @@ static int c = 0;
 void
 putchar(int r, int c, char v)
 {
-    unsigned char *base = VIDEO_RAM;
-    *(base + 160*r*2 + c*2) = v;
+    unsigned char *base = (unsigned char*)VIDEO_RAM;
+    *((unsigned char *)(base + 160*r*2 + c*2)) = v;
 }
 
 void
 putcolor(int r, int c, char v)
 {
-    unsigned char *base = VIDEO_RAM;
-    *(base + 160*r*2 + c*2 + 1) = v;
+    unsigned char *base = (unsigned char*)VIDEO_RAM;
+    *((unsigned char *)(base + 160*r*2 + c*2 + 1)) = v;
 }
 
 void
