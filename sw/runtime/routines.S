@@ -1,7 +1,7 @@
 .section .text.boot
 
 .globl __stack0
-.equ __stack0, 0xffff
+.equ __stack0, 0x10000
 
 .globl _start
 _start:

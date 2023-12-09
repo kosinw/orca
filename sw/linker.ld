@@ -27,6 +27,8 @@ SECTIONS
   }
   . = ALIGN(32);
 
+  . = 0x10000;
+
   /DISCARD/ : {
       *(.riscv.attributes)
       *(.eh_frame_hdr)

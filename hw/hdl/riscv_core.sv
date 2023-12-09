@@ -75,11 +75,11 @@ module riscv_core (
     MemoryState             MEM;
     WritebackState          WB;
 
-    // IF stage combinational signals
+    // IF signals
     logic   [31:0] if_instruction;
     logic          if_cache_miss;
 
-    // ID stage combinational signals
+    // ID signals
     logic [31:0] id_instr;
     logic [4:0] id_rs1, id_rs2, id_rd;
     logic [31:0] id_rd1, id_rd2;
@@ -100,16 +100,17 @@ module riscv_core (
     logic [4:0]  reg_debug_in;
     logic [31:0] reg_debug_out;
 
-    // EX stage combinational signals
+    // EX signals
     logic [31:0] ex_alu_result;
     logic [31:0] ex_next_pc;
     logic        ex_br_taken;
 
-    // MEM stage combinational signals
+    // MEM signals
     logic [31:0] mem_data_out;
     logic        mem_cache_miss;
+    logic        mem_new_request;
 
-    // WB stage combinational signals
+    // WB signals
     logic [31:0] wb_data;
 
     // control logic
@@ -444,6 +445,7 @@ module riscv_core (
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
             MEM <= '0;
+            mem_new_request <= 0;
         end else if (cpu_step_in) begin
             if (!mem_stall) begin
                 MEM.pc <= EX.pc;
@@ -455,6 +457,9 @@ module riscv_core (
                 MEM.dmem_size <= EX.dmem_size;
                 MEM.dmem_read_enable <= EX.dmem_read_enable;
                 MEM.dmem_write_enable <= EX.dmem_write_enable;
+                mem_new_request <= 1;
+            end else begin
+                mem_new_request <= 0;
             end
         end
     end
@@ -557,6 +562,8 @@ module riscv_core (
         .cpu_read_enable_in(MEM.dmem_read_enable),
         .cpu_write_enable_in(MEM.dmem_write_enable),
         .cpu_data_out(mem_data_out),
+
+        .new_request_in(mem_new_request),
         .cache_miss_out(mem_cache_miss),
 
         .mem_addr_out(dmem_addr_out),

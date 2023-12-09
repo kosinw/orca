@@ -13,6 +13,8 @@ module riscv_dcache (
     input wire cpu_write_enable_in,
     input wire cpu_read_enable_in,
     output logic [31:0] cpu_data_out,
+
+    input wire new_request_in,
     output logic cache_miss_out,
 
     output logic [31:0] mem_addr_out,
@@ -20,27 +22,27 @@ module riscv_dcache (
     output logic [3:0] mem_write_enable,
     input wire [31:0] mem_data_in
 );
-    enum { IDLE, WAIT, WAIT2 } state;
-    logic [31:0] addr;
+    enum { IDLE, WAIT1, FINISH } state;
     logic valid;
-    logic cache_hit;
 
     assign mem_addr_out = cpu_addr_in;
-    assign cache_miss_out = !((state == WAIT2) || cache_hit);
-    assign cache_hit = (addr == cpu_addr_in && valid) || !cpu_read_enable_in;
+
+    assign cache_miss_out = (new_request_in) ? (cpu_read_enable_in) :
+                            (cpu_read_enable_in && state != FINISH && !valid);
 
     always_ff @(posedge clk_in) begin
         if (rst_in) begin
-            addr <= 0;
+            state <= IDLE;
             valid <= 0;
-        end else if (!cache_hit) begin
+        end else if (new_request_in) begin
+            valid <= 0;
+            state <= WAIT1;
+        end else begin
             case (state)
-                IDLE:       state <= WAIT;
-                WAIT:       state <= WAIT2;
-                WAIT2:      begin
-                    state <= IDLE;
+                WAIT1:  state <= FINISH;
+                FINISH: begin
                     valid <= 1;
-                    addr <= cpu_addr_in;
+                    state <= IDLE;
                 end
             endcase
         end
