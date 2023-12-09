@@ -64,15 +64,17 @@ main(void)
 
     for (int r = 0; r < 45; r++) {
         for (int c = 0; c < 160; c++) {
-            putchar(r, c, ' ');
-            putcolor(r, c, '\x4f');
+            putchar(r, c, '\x00');
+            putcolor(r, c, '\x1f');
         }
     }
 
-    for (int i = 0; i < sizeof(dividends) / sizeof(int); i++) {
-        for (int j = 0; j < sizeof(divisors) / sizeof(int); j++) {
-            printint(dividends[i] * divisors[j], 10, 0);
-            putc(' ');
+    for (int repeat = 0; repeat < 100; repeat++) {
+        for (int i = 0; i < sizeof(dividends) / sizeof(int); i++) {
+            for (int j = 0; j < sizeof(divisors) / sizeof(int); j++) {
+                printint(dividends[i] * divisors[j], 10, 0);
+                putc(' ');
+            }
         }
     }
 }

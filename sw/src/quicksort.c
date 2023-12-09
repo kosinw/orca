@@ -1,62 +1,136 @@
 #include <runtime.h>
 
+#define VIDEO_RAM       0x20000
+
+static char digits[] = "0123456789abcdef";
+static int r = 0;
+static int c = 0;
+
 void
-swap(char *a, char *b)
+putchar(int r, int c, char v)
 {
-    char temp = *a;
+    unsigned char *base = VIDEO_RAM;
+    *(base + 160*r*2 + c*2) = v;
+}
+
+void
+putcolor(int r, int c, char v)
+{
+    unsigned char *base = VIDEO_RAM;
+    *(base + 160*r*2 + c*2 + 1) = v;
+}
+
+void
+putc(char v)
+{
+    putchar(r, c, v);
+
+    if (c + 1 == 160) {
+        c = 0;
+        r = (r + 1) % 45;
+    } else {
+        c++;
+    }
+}
+
+void
+printint(int xx, int base, int sign)
+{
+  char buf[16];
+  int i;
+  unsigned int x;
+
+  if(sign && (sign = xx < 0))
+    x = -xx;
+  else
+    x = xx;
+
+  i = 0;
+  do {
+    buf[i++] = digits[x % base];
+  } while((x /= base) != 0);
+
+  if(sign)
+    buf[i++] = '-';
+
+  while(--i >= 0)
+    putc(buf[i]);
+}
+
+void
+swap(int *a, int *b)
+{
+    int temp = *a;
     *a = *b;
     *b = temp;
 }
 
-void
-sort(char arr[], int size)
+int
+partition(int arr[], int low, int high)
 {
-    for (int i = 0; i < size - 1; i++) {
-        int min_index = i;
+    int pivot = arr[high];
+    int i = low - 1;
 
-        for (int j = i + 1; j < size; j++) {
-            if (arr[j] < arr[min_index]) {
-                min_index = j;
-            }
+    for (int j = low; j <= high - 1; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            swap(&arr[i], &arr[j]);
         }
+    }
 
-        if (min_index != i) {
-            swap(&arr[i], &arr[min_index]);
-        }
+    swap(&arr[i + 1], &arr[high]);
+    return i + 1;
+}
+
+void
+quicksort(int arr[], int low, int high)
+{
+    if (low < high) {
+        int pi = partition(arr, low, high);
+
+        quicksort(arr, low, pi - 1);
+        quicksort(arr, pi + 1, high);
     }
 }
 
 void
 main(void)
 {
-    char array[] = {8, 5, 4, 2, 1, 9, 3, 3, 3, 8, 7, 2, 4, 5};
-    // char *p = "The quick brown fox jumped over the lazy dog.";
-    // char *w = "Hello, world. This is a test message.";
+    int array[] = {91, 204, 233, 238, 164, 4, 17, 74, 216, 8, 121, 76, 43, 140, 216, 200, 249, 192, 188, 19};
 
-    // for (int i = 0; i < 160*2*45; i += 2)
-    // {
-    //     *((volatile char*)(0x20000 + i)) = '\x00';
-    //     *((volatile char*)(0x20001 + i)) = '\x00';
-    // }
+    int size = sizeof(array) / sizeof(int);
 
-    for (int i = 0; i < sizeof(array); ++i)
-    {
-        *((volatile char*)(0x20002 + i*2)) = (char)(array[i] + '0');
-        *((volatile char*)(0x20003 + i*2)) = '\x4f';
+    for (int r = 0; r < 45; r++) {
+        for (int c = 0; c < 160; c++) {
+            putchar(r, c, '\x00');
+            putcolor(r, c, '\x0f');
+        }
     }
 
-    sort(array, sizeof(array));
+    c = 10;
 
-    for (int i = 0; i < sizeof(array); ++i)
+    for (int i = 0; i < size; ++i)
     {
-        *((volatile char*)(0x20142 + i*2)) = (char)(array[i] + '0');
-        *((volatile char*)(0x20143 + i*2)) = '\x4f';
+        printint(array[i], 10, 0);
+
+        if (i != size - 1) {
+            putc(',');
+            putc(' ');
+        }
     }
 
-    // for (int j = 0; *w != '\0'; j += 2)
-    // {
-    //     *((volatile char*)(0x20140 + j)) = *w;
-    //     *((volatile char*)(0x20141 + j)) = '\x4f';
-    //     w++;
-    // }
+    r += 1;
+    c = 10;
+
+    quicksort(array, 0, size-1);
+
+    for (int i = 0; i < size; ++i)
+    {
+        printint(array[i], 10, 0);
+
+        if (i != size - 1) {
+            putc(',');
+            putc(' ');
+        }
+    }
 }
