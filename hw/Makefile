@@ -3,7 +3,6 @@ SOURCES := 										\
 	obj/										\
 	xdc/										\
 	sim/										\
-	ip/											\
 	data/										\
 
 .PHONY: all
