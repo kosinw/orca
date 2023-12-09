@@ -29,7 +29,7 @@ sort(char arr[], int size)
 void
 main(void)
 {
-    char array[] = {8, 5, 4, 2, 1, 9};
+    char array[] = {8, 5, 4, 2, 1, 9, 3, 3, 3, 8, 7, 2, 4, 5};
     // char *p = "The quick brown fox jumped over the lazy dog.";
     // char *w = "Hello, world. This is a test message.";
 

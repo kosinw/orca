@@ -16,7 +16,7 @@
 `define OPCODE_LOAD         7'b0000011     // lw, lh, lb, lhu, lbu
 `define OPCODE_STORE        7'b0100011     // sw, sh, sb
 `define OPCODE_IMM          7'b0010011     // addi, slli, slti, sltiu, xori, srli, srai, ori, andi
-`define OPCODE_REG          7'b0110011     // add, sub, sll, slt, stlu, xor, srl, sra, or, and
+`define OPCODE_REG          7'b0110011     // add, sub, sll, slt, stlu, xor, srl, sra, or, and, mul[hsu], div[u], rem[u]
 
 // funct3
 `define FUNCT3_ALU_ADD      3'b000
@@ -27,6 +27,14 @@
 `define FUNCT3_ALU_SR       3'b101
 `define FUNCT3_ALU_OR       3'b110
 `define FUNCT3_ALU_AND      3'b111
+`define FUNCT3_ALU_MUL      3'b000
+`define FUNCT3_ALU_MULH     3'b001
+`define FUNCT3_ALU_MULHSU   3'b010
+`define FUNCT3_ALU_MULHU    3'b011
+`define FUNCT3_ALU_DIV      3'b100
+`define FUNCT3_ALU_DIVU     3'b101
+`define FUNCT3_ALU_REM      3'b110
+`define FUNCT3_ALU_REMU     3'b111
 
 `define FUNCT3_MEM_B        3'b000
 `define FUNCT3_MEM_H        3'b001
@@ -46,22 +54,31 @@
 `define FUNCT7_ALU_SUB     7'b0100000
 `define FUNCT7_ALU_SRL     7'b0000000
 `define FUNCT7_ALU_SRA     7'b0100000
+`define FUNCT7_ALU_MUL     7'b0000001
 
 // alu func
-`define ALU_FUNC_NONE       4'd0
-`define ALU_FUNC_ADD        4'd1
-`define ALU_FUNC_SUB        4'd2
-`define ALU_FUNC_SLL        4'd3
-`define ALU_FUNC_SLT        4'd4
-`define ALU_FUNC_SLTU       4'd5
-`define ALU_FUNC_XOR        4'd6
-`define ALU_FUNC_SRL        4'd7
-`define ALU_FUNC_SRA        4'd8
-`define ALU_FUNC_OR         4'd9
-`define ALU_FUNC_AND        4'd10
-`define ALU_FUNC_JALR       4'd11
-`define ALU_FUNC_COPY2      4'd12
-`define ALU_FUNC_BR         4'd13
+`define ALU_FUNC_NONE       5'd0
+`define ALU_FUNC_ADD        5'd1
+`define ALU_FUNC_SUB        5'd2
+`define ALU_FUNC_SLL        5'd3
+`define ALU_FUNC_SLT        5'd4
+`define ALU_FUNC_SLTU       5'd5
+`define ALU_FUNC_XOR        5'd6
+`define ALU_FUNC_SRL        5'd7
+`define ALU_FUNC_SRA        5'd8
+`define ALU_FUNC_OR         5'd9
+`define ALU_FUNC_AND        5'd10
+`define ALU_FUNC_JALR       5'd11
+`define ALU_FUNC_COPY2      5'd12
+`define ALU_FUNC_BR         5'd13
+`define ALU_FUNC_MUL        5'd14
+`define ALU_FUNC_MULH       5'd15
+`define ALU_FUNC_MULHSU     5'd16
+`define ALU_FUNC_MULHU      5'd17
+`define ALU_FUNC_DIV        5'd18
+`define ALU_FUNC_DIVU       5'd19
+`define ALU_FUNC_REM        5'd20
+`define ALU_FUNC_REMU       5'd21
 
 // br func
 `define BR_FUNC_NONE        3'd0

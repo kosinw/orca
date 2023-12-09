@@ -14,7 +14,7 @@ module riscv_decode(
     output logic        op1_sel_out,
     output logic        op2_sel_out,
     output logic [1:0]  writeback_sel_out,
-    output logic [3:0]  alu_func_out,
+    output logic [4:0]  alu_func_out,
     output logic        write_enable_rf_out,
     output logic [2:0]  dmem_size_out,
     output logic        dmem_read_enable_out,
@@ -185,21 +185,35 @@ module riscv_decode(
                 op1_sel_out = `OP1_RS1;
                 op2_sel_out = `OP2_RS2;
                 writeback_sel_out = `WRITEBACK_ALU;
-                case (funct3)
-                    `FUNCT3_ALU_ADD:     alu_func_out = (funct7 === `FUNCT7_ALU_ADD) ?  `ALU_FUNC_ADD :
-                                                        (funct7 === `FUNCT7_ALU_SUB) ?  `ALU_FUNC_SUB :
-                                                        `ALU_FUNC_NONE;
-                    `FUNCT3_ALU_SLL:     alu_func_out = `ALU_FUNC_SLL;
-                    `FUNCT3_ALU_SLT:     alu_func_out = `ALU_FUNC_SLT;
-                    `FUNCT3_ALU_SLTU:    alu_func_out = `ALU_FUNC_SLTU;
-                    `FUNCT3_ALU_XOR:     alu_func_out = `ALU_FUNC_XOR;
-                    `FUNCT3_ALU_OR:      alu_func_out = `ALU_FUNC_OR;
-                    `FUNCT3_ALU_SR:      alu_func_out = (funct7 === `FUNCT7_ALU_SRL) ?  `ALU_FUNC_SRL :
-                                                        (funct7 === `FUNCT7_ALU_SRA) ?  `ALU_FUNC_SRA :
-                                                        `ALU_FUNC_NONE;
-                    `FUNCT3_ALU_AND:     alu_func_out = `ALU_FUNC_AND;
-                    default:             alu_func_out = `ALU_FUNC_NONE;
-                endcase
+                if (funct7 == `FUNCT7_ALU_MUL) begin
+                    case (funct3)
+                        `FUNCT3_ALU_MUL:    alu_func_out = `ALU_FUNC_MUL;
+                        `FUNCT3_ALU_MULH:   alu_func_out = `ALU_FUNC_MULH;
+                        `FUNCT3_ALU_MULHSU: alu_func_out = `ALU_FUNC_MULHSU;
+                        `FUNCT3_ALU_MULHU:  alu_func_out = `ALU_FUNC_MULHU;
+                        `FUNCT3_ALU_DIV:    alu_func_out = `ALU_FUNC_DIV;
+                        `FUNCT3_ALU_DIVU:   alu_func_out = `ALU_FUNC_DIVU;
+                        `FUNCT3_ALU_REM:    alu_func_out = `ALU_FUNC_REM;
+                        `FUNCT3_ALU_REMU:   alu_func_out = `ALU_FUNC_REMU;
+                        default:            alu_func_out = `ALU_FUNC_NONE;
+                    endcase
+                end else begin
+                    case (funct3)
+                        `FUNCT3_ALU_ADD:     alu_func_out = (funct7 === `FUNCT7_ALU_ADD) ?  `ALU_FUNC_ADD :
+                                                            (funct7 === `FUNCT7_ALU_SUB) ?  `ALU_FUNC_SUB :
+                                                            `ALU_FUNC_NONE;
+                        `FUNCT3_ALU_SLL:     alu_func_out = `ALU_FUNC_SLL;
+                        `FUNCT3_ALU_SLT:     alu_func_out = `ALU_FUNC_SLT;
+                        `FUNCT3_ALU_SLTU:    alu_func_out = `ALU_FUNC_SLTU;
+                        `FUNCT3_ALU_XOR:     alu_func_out = `ALU_FUNC_XOR;
+                        `FUNCT3_ALU_OR:      alu_func_out = `ALU_FUNC_OR;
+                        `FUNCT3_ALU_SR:      alu_func_out = (funct7 === `FUNCT7_ALU_SRL) ?  `ALU_FUNC_SRL :
+                                                            (funct7 === `FUNCT7_ALU_SRA) ?  `ALU_FUNC_SRA :
+                                                            `ALU_FUNC_NONE;
+                        `FUNCT3_ALU_AND:     alu_func_out = `ALU_FUNC_AND;
+                        default:             alu_func_out = `ALU_FUNC_NONE;
+                    endcase
+                end
                 write_enable_rf_out = `ON;
                 dmem_size_out = `MASK_NONE;
                 dmem_read_enable_out = `OFF;

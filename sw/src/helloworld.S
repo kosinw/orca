@@ -1,39 +1,21 @@
+.text
 .globl _start
-
 _start:
     nop
-    li x1, 'H'
-    li x2, 0x20000
-    sb x1, 0(x2)
-    li x1, 'E'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, 'L'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, 'L'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, 'O'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, ' '
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, 'W'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, 'O'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, 'R'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, 'L'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-    li x1, 'D'
-    addi x2, x2, 2
-    sb x1, 0(x2)
-halt:
-    j halt
+    la      a0, hello_world
+    la      a1, 0x20000
+
+copy_loop:
+    lb      t0, 0(a0)
+    beqz    t0, done
+    sb      t0, 0(a1)
+    addi    a0, a0, 1
+    addi    a1, a1, 2
+    j       copy_loop
+
+done:
+    j       done
+
+.data
+hello_world:
+    .string "Hello, world!"

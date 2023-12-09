@@ -33,7 +33,7 @@ module riscv_core (
         logic   [31:0]  a;
         logic   [31:0]  b;
         logic   [2:0]   br_func;
-        logic   [3:0]   alu_func;
+        logic   [4:0]   alu_func;
         logic   [1:0]   pc_sel;
         logic   [1:0]   wb_sel;
         logic           werf;
@@ -88,7 +88,7 @@ module riscv_core (
     logic [1:0] id_pc_sel;
     logic id_op1_sel, id_op2_sel;
     logic [1:0] id_wb_sel;
-    logic [3:0] id_alu_func;
+    logic [4:0] id_alu_func;
     logic id_we_rf;
     logic [2:0] id_dmem_size;
     logic id_dmem_read_enable;
@@ -104,6 +104,8 @@ module riscv_core (
     logic [31:0] ex_alu_result;
     logic [31:0] ex_next_pc;
     logic        ex_br_taken;
+    logic        ex_result_ready;
+    logic        ex_new_request;
 
     // MEM signals
     logic [31:0] mem_data_out;
@@ -155,7 +157,7 @@ module riscv_core (
     logic [31:0]    DEBUG3_EX1_A;
     logic [31:0]    DEBUG3_EX2_B;
     logic [31:0]    DEBUG3_EX3_RESULT;
-    logic [3:0]     DEBUG3_EX4_ALU_FUNC;
+    logic [4:0]     DEBUG3_EX4_ALU_FUNC;
     logic           DEBUG3_EX5_BRANCH_TAKEN;
 
     logic [31:0]    DEBUG4_MEM0_PC;
@@ -247,7 +249,7 @@ module riscv_core (
     //
     //////////////////////////////////////////////////////////////////////
 
-    assign annul = (EX.pc_sel === `PC_SEL_BRJMP && ex_br_taken) || (EX.pc_sel === `PC_SEL_ALU);
+    assign annul = (EX.pc_sel == `PC_SEL_BRJMP && ex_br_taken) || (EX.pc_sel == `PC_SEL_ALU);
 
     // Load-to-use hazard is active when:
     //  - The incident register cannot be x0
@@ -256,15 +258,15 @@ module riscv_core (
     //  - Said load instruction has an RD equal to RS1/RS2
     //  - ENSURE THERE IS A BYPASS FROM WB
 
-    assign ltu_hazard_rs1 = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs1) || (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs1));
-    assign ltu_hazard_rs2 = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && ((EX.wb_sel === `WRITEBACK_DATA && EX.rd === id_rs2) || (MEM.wb_sel === `WRITEBACK_DATA && MEM.rd === id_rs2));
+    assign ltu_hazard_rs1 = id_rs1 != 5'b0 && (id_op1_sel == `OP1_RS1) && ((EX.wb_sel == `WRITEBACK_DATA && EX.rd == id_rs1) || (MEM.wb_sel == `WRITEBACK_DATA && MEM.rd == id_rs1));
+    assign ltu_hazard_rs2 = id_rs2 != 5'b0 && (id_op2_sel == `OP2_RS2) && ((EX.wb_sel == `WRITEBACK_DATA && EX.rd == id_rs2) || (MEM.wb_sel == `WRITEBACK_DATA && MEM.rd == id_rs2));
 
     assign ltu_hazard   = ltu_hazard_rs1 || ltu_hazard_rs2;
 
-    assign if_stall     = ltu_hazard || if_cache_miss || mem_cache_miss;
-    assign id_stall     = ltu_hazard || mem_cache_miss;
-    assign ex_stall     = mem_cache_miss;
-    assign mem_stall    = mem_cache_miss;
+    assign if_stall     = ltu_hazard || if_cache_miss || mem_cache_miss || !ex_result_ready;
+    assign id_stall     = ltu_hazard ||                  mem_cache_miss || !ex_result_ready;
+    assign ex_stall     =                                mem_cache_miss || !ex_result_ready;
+    assign mem_stall    =                                mem_cache_miss;
     assign wb_stall     = 1'b0;
 
     // Read-after-write hazard is active when:
@@ -273,13 +275,13 @@ module riscv_core (
     //  - There is an instruction further in the pipeline which writebacks to register file (WERF)
     //  - Destination register of writeback instruction matches RS1 (or RS2)
 
-    assign raw_rs1_ex  = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (EX.werf  && EX.rd  === id_rs1);
-    assign raw_rs1_mem = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (MEM.werf && MEM.rd === id_rs1);
-    assign raw_rs1_wb  = id_rs1 != 5'b0 && (id_op1_sel === `OP1_RS1) && (WB.werf  && WB.rd  === id_rs1);
+    assign raw_rs1_ex  = id_rs1 != 5'b0 && (id_op1_sel == `OP1_RS1) && (EX.werf  && EX.rd  == id_rs1);
+    assign raw_rs1_mem = id_rs1 != 5'b0 && (id_op1_sel == `OP1_RS1) && (MEM.werf && MEM.rd == id_rs1);
+    assign raw_rs1_wb  = id_rs1 != 5'b0 && (id_op1_sel == `OP1_RS1) && (WB.werf  && WB.rd  == id_rs1);
 
-    assign raw_rs2_ex  = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (EX.werf  && EX.rd  === id_rs2);
-    assign raw_rs2_mem = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (MEM.werf && MEM.rd === id_rs2);
-    assign raw_rs2_wb  = id_rs2 != 5'b0 && (id_op2_sel === `OP2_RS2) && (WB.werf  && WB.rd  === id_rs2);
+    assign raw_rs2_ex  = id_rs2 != 5'b0 && (id_op2_sel == `OP2_RS2) && (EX.werf  && EX.rd  == id_rs2);
+    assign raw_rs2_mem = id_rs2 != 5'b0 && (id_op2_sel == `OP2_RS2) && (MEM.werf && MEM.rd == id_rs2);
+    assign raw_rs2_wb  = id_rs2 != 5'b0 && (id_op2_sel == `OP2_RS2) && (WB.werf  && WB.rd  == id_rs2);
 
     always_comb begin
         if (raw_rs1_ex) begin
@@ -400,8 +402,10 @@ module riscv_core (
                 EX.dmem_size    <= `MASK_NONE;
                 EX.dmem_read_enable <= `OFF;
                 EX.dmem_write_enable <= `OFF;
+                ex_new_request <= 1;
             end else if (ex_stall) begin
                 EX <= EX;
+                ex_new_request <= 0;
             end else if (id_stall) begin
                 EX.pc           <= `ZERO;
                 EX.br_target    <= `ZERO;
@@ -417,6 +421,7 @@ module riscv_core (
                 EX.dmem_size    <= `MASK_NONE;
                 EX.dmem_read_enable <= `OFF;
                 EX.dmem_write_enable <= `OFF;
+                ex_new_request <= 1;
             end else begin
                 EX.pc        <= ID.pc;
                 EX.br_target <= id_imm + ID.pc;
@@ -432,6 +437,7 @@ module riscv_core (
                 EX.dmem_size <= id_dmem_size;
                 EX.dmem_read_enable <= id_dmem_read_enable;
                 EX.dmem_write_enable <= id_dmem_write_enable;
+                ex_new_request <= 1;
             end
         end
     end
@@ -556,12 +562,16 @@ module riscv_core (
     );
 
     riscv_alu alu_unit (
+        .clk_in(clk_in),
+        .rst_in(rst_in),
         .alu_func_in(EX.alu_func),
         .br_func_in(EX.br_func),
         .a_in(EX.a),
         .b_in(EX.b),
+        .valid_in(ex_new_request),
         .result_out(ex_alu_result),
-        .branch_taken_out(ex_br_taken)
+        .branch_taken_out(ex_br_taken),
+        .result_ready_out(ex_result_ready)
     );
 
     riscv_lsu lsu (
