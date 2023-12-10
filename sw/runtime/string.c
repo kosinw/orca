@@ -1,3 +1,5 @@
+#include <runtime.h>
+
 void*
 memset(void *dst, int c, unsigned n)
 {
@@ -49,7 +51,7 @@ memmove(void *dst, const void *src, unsigned n)
 }
 
 void*
-memcpy(void *dst, const void *src, unsigned n)
+memcpy(void *dst, const void *src, unsigned int n)
 {
   return memmove(dst, src, n);
 }
@@ -74,21 +76,6 @@ strncpy(char *s, const char *t, int n)
     ;
   while(n-- > 0)
     *s++ = 0;
-  return os;
-}
-
-// Like strncpy but guaranteed to NUL-terminate.
-char*
-safestrcpy(char *s, const char *t, int n)
-{
-  char *os;
-
-  os = s;
-  if(n <= 0)
-    return os;
-  while(--n > 0 && (*s++ = *t++) != 0)
-    ;
-  *s = 0;
   return os;
 }
 

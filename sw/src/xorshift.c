@@ -10,10 +10,8 @@ struct xorshift32_state {
     uint32_t a;
 };
 
-/* The state must be initialized to non-zero */
 uint32_t xorshift32(struct xorshift32_state *state)
 {
-	/* Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" */
 	uint32_t x = state->a;
 	x ^= x << 13;
 	x ^= x >> 17;
@@ -84,7 +82,13 @@ printint(unsigned long x, int base, int *r, int *c)
   }
 }
 
-uint32_t
+inline uint32_t
+entropy(void)
+{
+    return *(uint32_t*)MMIO_ENTROPY;
+}
+
+inline uint32_t
 counter(void)
 {
     return *(uint32_t*)MMIO_COUNTER;
@@ -94,7 +98,7 @@ void
 main(void)
 {
     clearscreen('\x04');
-    struct xorshift32_state state = { .a = *(uint32_t*)MMIO_ENTROPY };
+    struct xorshift32_state state = { .a = entropy() };
     int r = 1;
     int c = 1;
 
@@ -102,7 +106,7 @@ main(void)
 
     while (1) {
         volatile uint32_t second = counter();
-        if ((second - first) > 1000000) {
+        if ((second - first) > 400000) {
             for (int round = 0; round < 10; round++) {
                 puts("ROUND", &r, &c);
                 printint(round, 10, &r, &c);
