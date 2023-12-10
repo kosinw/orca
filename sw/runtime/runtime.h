@@ -22,6 +22,8 @@ char*       strncpy(char*, const char*, int);
 void        videoinit(uint8_t);
 void        videoclear(void);
 void        videosetcolor(uint8_t);
+void        videosetcolumn(int);
+void        videomovecursor(int, int);
 uint8_t     videogetcolor(void);
 void        videoenablecursor(int);
 void        videoputchar(char, uint8_t, int, int);
@@ -35,6 +37,11 @@ void        printf(char *fmt, ...);
 uint32_t    time(void);
 void        nanosleep(uint32_t);
 
+// random.c - randomness
+uint32_t    entropy(void);
+void        srand(void);
+uint32_t    xorshift32(void);
+
 // defines
 #define COLOR_BLACK             0b000
 #define COLOR_RED               0b001
@@ -45,7 +52,7 @@ void        nanosleep(uint32_t);
 #define COLOR_AQUA              0b110
 #define COLOR_WHITE             0b111
 
-#define FOREGROUND_LIGHT        0b1000
+#define FOREGROUND_LIGHT        1 << 3
 #define BLINK                   1 << 7
 
 #define FOREGROUND_BLACK        COLOR_BLACK

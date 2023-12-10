@@ -8,6 +8,7 @@ struct video_char {
 struct video_buffer {
     int                     row;     // current row of the cursor
     int                     col;     // current col of the cursor
+    int                     dc;      // default column to move to
     struct video_char       *buf;    // buffer location
     uint8_t                 color;   // default color for printing
 };
@@ -19,6 +20,7 @@ videoinit(uint8_t color)
 {
     VIDEO.row    = 0;
     VIDEO.col    = 0;
+    VIDEO.dc     = 0;
     VIDEO.buf    = (struct video_char *)MMIO_VIDEO_RAM;
     VIDEO.color  = color;
 
@@ -39,6 +41,29 @@ void
 videosetcolor(uint8_t c)
 {
     VIDEO.color = c;
+}
+
+void
+videosetcolumn(int d)
+{
+    VIDEO.col = d;
+    VIDEO.dc = d;
+}
+
+void
+videomovecursor(int r, int c)
+{
+    struct video_char ch = VIDEO.buf[VIDEO.row * VIDEO_BUFFER_WIDTH + VIDEO.col];
+    int enabled = (ch.color & BLINK) != 0;
+
+    videoenablecursor(0);
+
+    VIDEO.row = r;
+    VIDEO.col = c;
+
+    if (enabled) {
+        videoenablecursor(1);
+    }
 }
 
 uint8_t
@@ -82,6 +107,8 @@ videoscrollup(int lines)
 
     VIDEO.buf[i].character = '\x00';
     VIDEO.buf[i].color = VIDEO.color;
+
+    nanosleep(20000000);
 }
 
 static void
@@ -89,9 +116,9 @@ videonextline(void)
 {
     if ((VIDEO.row + 1) == VIDEO_BUFFER_HEIGHT) {
         videoscrollup(1);
-        VIDEO.col = 0;
+        VIDEO.col = VIDEO.dc;
     } else {
-        VIDEO.col = 0;
+        VIDEO.col = VIDEO.dc;
         VIDEO.row = VIDEO.row + 1;
     }
 }
