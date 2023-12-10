@@ -25,7 +25,6 @@ void        videosetcolor(uint8_t);
 uint8_t     videogetcolor(void);
 void        videoenablecursor(int);
 void        videoputchar(char, uint8_t, int, int);
-void        videomovecursor(int, int);
 void        videoscrollup(int);
 void        videoputc(char);
 
@@ -47,7 +46,7 @@ void        nanosleep(uint32_t);
 #define COLOR_WHITE             0b111
 
 #define FOREGROUND_LIGHT        0b1000
-#define BACKGROUND_BLINK        0b1000
+#define BLINK                   1 << 7
 
 #define FOREGROUND_BLACK        COLOR_BLACK
 #define FOREGROUND_MAROON       COLOR_RED
@@ -81,37 +80,40 @@ void        nanosleep(uint32_t);
 #define VIDEO_OPTION_CURSOR 1 << 0
 
 // Horizontal Lines
-#define BOX_HORIZONTAL "\xC4"
-#define BOX_HORIZONTAL_DOUBLE "\xCD"
-#define BOX_HORIZONTAL_LIGHT "\xB3"
+#define BOX_HORIZONTAL '\xC4'
+#define BOX_HORIZONTAL_DOUBLE '\xCD'
+#define BOX_HORIZONTAL_LIGHT '\xB3'
 
 // Vertical Lines
-#define BOX_VERTICAL "\xB3"
-#define BOX_VERTICAL_DOUBLE "\xBA"
-#define BOX_VERTICAL_LIGHT "\xC4"
+#define BOX_VERTICAL '\xB3'
+#define BOX_VERTICAL_DOUBLE '\xBA'
+#define BOX_VERTICAL_LIGHT '\xC4'
 
 // Corners
-#define BOX_TOP_LEFT "\xDA"
-#define BOX_TOP_RIGHT "\xBF"
-#define BOX_BOTTOM_LEFT "\xC0"
-#define BOX_BOTTOM_RIGHT "\xD9"
+#define BOX_TOP_LEFT '\xDA'
+#define BOX_TOP_RIGHT '\xBF'
+#define BOX_BOTTOM_LEFT '\xC0'
+#define BOX_BOTTOM_RIGHT '\xD9'
 
 // Intersections
-#define BOX_INTERSECTION_TOP "\xC2"
-#define BOX_INTERSECTION_BOTTOM "\xC1"
-#define BOX_INTERSECTION_LEFT "\xC3"
-#define BOX_INTERSECTION_RIGHT "\xB4"
-#define BOX_INTERSECTION_CROSS "\xC5"
+#define BOX_INTERSECTION_TOP '\xC2'
+#define BOX_INTERSECTION_BOTTOM '\xC1'
+#define BOX_INTERSECTION_LEFT '\xC3'
+#define BOX_INTERSECTION_RIGHT '\xB4'
+#define BOX_INTERSECTION_CROSS '\xC5'
 
 // T-Junctions
-#define BOX_T_LEFT "\xC6"
-#define BOX_T_RIGHT "\xC7"
-#define BOX_T_TOP "\xC8"
-#define BOX_T_BOTTOM "\xCA"
+#define BOX_T_LEFT '\xC6'
+#define BOX_T_RIGHT '\xC7'
+#define BOX_T_TOP '\xC8'
+#define BOX_T_BOTTOM '\xCA'
 
 // Special Characters
-#define BOX_CROSS "\xCE"
-#define BOX_HORIZONTAL_SINGLE_DOUBLE "\xD5"
-#define BOX_HORIZONTAL_DOUBLE_SINGLE "\xD6"
-#define BOX_VERTICAL_SINGLE_DOUBLE "\xB9"
-#define BOX_VERTICAL_DOUBLE_SINGLE "\xBA"
+#define BOX_CROSS '\xCE'
+#define BOX_HORIZONTAL_SINGLE_DOUBLE '\xD5'
+#define BOX_HORIZONTAL_DOUBLE_SINGLE '\xD6'
+#define BOX_VERTICAL_SINGLE_DOUBLE '\xB9'
+#define BOX_VERTICAL_DOUBLE_SINGLE '\xBA'
+
+// Cursor
+#define CURSOR_CHARACTER '\xB1'

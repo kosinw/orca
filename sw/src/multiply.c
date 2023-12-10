@@ -9,17 +9,16 @@ main(void)
     int divisors[]  = {11, 10, 9, 8, 2, 3, 5, 6};
 
     videoinit(FOREGROUND_WHITE | BACKGROUND_BLACK);
-    videoenablecursor(1);
 
-    while (1) {
-        for (int i = 0; i < ARRAYCOUNT(dividends); i++) {
-            for (int j = 0; j < ARRAYCOUNT(divisors); j++) {
-                int a = dividends[i];
-                int b = divisors[j];
+    for (int i = 0; i < ARRAYCOUNT(dividends); i++) {
+        for (int j = 0; j < ARRAYCOUNT(divisors); j++) {
+            int a = dividends[i];
+            int b = divisors[j];
 
-                printf("%d * %d = %d\n", a, b, a * b);
-                nanosleep(100000000);
-            }
+            printf("%d * %d = %d\n", a, b, a * b);
+            nanosleep(100000000);
         }
     }
+
+    videoenablecursor(1);
 }

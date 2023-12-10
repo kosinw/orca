@@ -10,7 +10,6 @@ struct video_buffer {
     int                     col;     // current col of the cursor
     struct video_char       *buf;    // buffer location
     uint8_t                 color;   // default color for printing
-    uint8_t                 cursor;  // cursor color
 };
 
 static struct video_buffer VIDEO;
@@ -22,10 +21,8 @@ videoinit(uint8_t color)
     VIDEO.col    = 0;
     VIDEO.buf    = (struct video_char *)MMIO_VIDEO_RAM;
     VIDEO.color  = color;
-    VIDEO.cursor = 0;
 
     videoclear();
-    videomovecursor(0, 0);
 }
 
 void
@@ -41,7 +38,7 @@ videoclear(void)
 void
 videosetcolor(uint8_t c)
 {
-    VIDEO.color = c & ~BACKGROUND_BLINK;
+    VIDEO.color = c;
 }
 
 uint8_t
@@ -53,23 +50,17 @@ videogetcolor(void)
 void
 videoenablecursor(int enable)
 {
-    VIDEO.cursor = (enable) ? BACKGROUND_BLINK : 0;
-    videoputchar('\x00', VIDEO.color | VIDEO.cursor, VIDEO.row, VIDEO.col);
+    if (enable) {
+        videoputchar(' ', (VIDEO.color | BLINK), VIDEO.row, VIDEO.col);
+    } else {
+        videoputchar('\x00', VIDEO.color, VIDEO.row, VIDEO.col);
+    }
 }
 
 void
 videoputchar(char character, uint8_t color, int r, int c)
 {
     VIDEO.buf[r * VIDEO_BUFFER_WIDTH + c] = (struct video_char){ .character = character, .color = color };
-}
-
-void
-videomovecursor(int r, int c)
-{
-    videoputchar('\x00', VIDEO.color, VIDEO.row, VIDEO.col);
-    VIDEO.row = r;
-    VIDEO.col = c;
-    videoputchar('\x00', VIDEO.color | VIDEO.cursor, VIDEO.row, VIDEO.col);
 }
 
 void
@@ -90,7 +81,7 @@ videoscrollup(int lines)
     }
 
     VIDEO.buf[i].character = '\x00';
-    VIDEO.buf[i].color = VIDEO.color | VIDEO.cursor;
+    VIDEO.buf[i].color = VIDEO.color;
 }
 
 static void
@@ -105,20 +96,25 @@ videonextline(void)
     }
 }
 
+static void
+videonextpos(void)
+{
+    if ((VIDEO.col + 1) == VIDEO_BUFFER_WIDTH) {
+        videonextline();
+    } else {
+        VIDEO.col += 1;
+    }
+}
+
 void
 videoputc(char c)
 {
+    videoenablecursor(0);
+
     if (c == '\n') {
         videonextline();
     } else {
         videoputchar(c, VIDEO.color, VIDEO.row, VIDEO.col);
-
-        if ((VIDEO.col + 1) == VIDEO_BUFFER_WIDTH) {
-            videonextline();
-        } else {
-            VIDEO.col += 1;
-        }
+        videonextpos();
     }
-
-    videomovecursor(VIDEO.row, VIDEO.col);
 }
