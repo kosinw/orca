@@ -1,4 +1,4 @@
-`include "hdl/aes_defs.sv"
+`include "hdl/aes/aes_defs.sv"
 
 module aes_core_tb;
   logic clk_in;

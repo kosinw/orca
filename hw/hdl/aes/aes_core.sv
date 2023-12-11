@@ -9,7 +9,7 @@
 
 `timescale 1ns / 1ps 
 `default_nettype none
-`include "hdl/aes_defs.sv"
+`include "hdl/aes/aes_defs.sv"
 
 module aes_core (
   // Default system inputs
@@ -38,6 +38,7 @@ module aes_core (
 
   // encryption/decryption output
   logic [127:0] data_out_encrypt, data_out_decrypt;
+  logic [127:0] temp_data_in;
 
   // round - what round of the encryption/decryption it is currently in
   // key_memory_round_rd_in - the round to read the key in aes_key_memory module
@@ -90,7 +91,7 @@ module aes_core (
     .clk_in(clk_in),
     .rst_in(rst_in),
     .init_in(encrypt_init),
-    .data_in(data_in),
+    .data_in(temp_data_in),
     .key_in(round_key),
     .round_in(round),
     .next_round_out(next_round_encrypt),
@@ -104,7 +105,7 @@ module aes_core (
     .clk_in(clk_in),
     .rst_in(rst_in),
     .init_in(decrypt_init),
-    .data_in(data_in),
+    .data_in(temp_data_in),
     .key_in(round_key),
     .round_in(round),
     .next_round_out(next_round_decrypt),
@@ -128,6 +129,9 @@ module aes_core (
       round <= `ROUND_INIT;
       start_aes <= 1'b0;
     end else begin
+      if (init_in) begin
+        temp_data_in <= data_in;
+      end
       if (key_expanded) begin
         start_aes <= 1'b1;
       end else begin
