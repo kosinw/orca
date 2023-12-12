@@ -3,7 +3,8 @@ module aes_integration_tb;
   logic [2:0] aes_ctrl;
   logic [31:0] aes_data_in;
   logic [3:0] aes_mem_we;
-  logic [9:0] aes_mem_addr;
+  logic [9:0] aes_mem_rd_addr;
+  logic [9:0] aes_mem_wr_addr;
 
   logic [31:0] aes_data_out;
   logic aes_complete;
@@ -14,7 +15,8 @@ module aes_integration_tb;
     .aes_ctrl_in(aes_ctrl),
     .aes_data_in(aes_data_in),
     .aes_mem_we_in(aes_mem_we),
-    .aes_mem_addr_in(aes_mem_addr),
+    .aes_mem_rd_addr_in(aes_mem_rd_addr),
+    .aes_mem_wr_addr_in(aes_mem_wr_addr),
     .aes_data_out(aes_data_out),
     .aes_complete_out(aes_complete)
   );
@@ -35,17 +37,19 @@ module aes_integration_tb;
 
   task write_to_aes_mem(input [9:0] mem_addr, input [31:0] data);
     aes_mem_we = 4'hf;
-    aes_mem_addr = mem_addr;
+    aes_mem_wr_addr = mem_addr;
     aes_data_in = data;
     $display("Data Written: %0h", data);
     #10;
   endtask
 
-  task read_from_aes_mem(input [9:0] mem_addr);
+  task read_from_aes_mem(input [9:0] mem_addr, input print);
     aes_mem_we = 4'h0;
-    aes_mem_addr = mem_addr;
+    aes_mem_rd_addr = mem_addr;
     #20;
-    $display("Data Read: %0h", aes_data_out);
+    if (print) begin
+      $display("Data Read: %0h", aes_data_out);
+    end
   endtask
 
   task start;
@@ -69,14 +73,17 @@ module aes_integration_tb;
     write_to_aes_mem(1, 32'hc1403d93);
     write_to_aes_mem(2, 32'hbe9f7e17);
     write_to_aes_mem(3, 32'he296112a);
-    write_to_aes_mem(4, 32'hdeadbeef);
+    write_to_aes_mem(4, 32'he296112a);
+    write_to_aes_mem(5, 32'hdeadbeef);
+
+    aes_mem_we = 4'h0;
 
     // read_from_aes_mem(0);
     // read_from_aes_mem(1);
     // read_from_aes_mem(2);
     // read_from_aes_mem(3);
     // read_from_aes_mem(4);
-    read_from_aes_mem(5);
+    // read_from_aes_mem(5, 1'b0);
 
     #100;
 
@@ -84,13 +91,24 @@ module aes_integration_tb;
 
     wait_complete();
 
-    // #1000;
+    $display("Break---");
 
-    read_from_aes_mem(257);
-    read_from_aes_mem(258);
-    read_from_aes_mem(259);
-    read_from_aes_mem(260);
-    read_from_aes_mem(261);
+    // #10000;
+    read_from_aes_mem(0, 1'b1);
+    read_from_aes_mem(1, 1'b1);
+    read_from_aes_mem(2, 1'b1);
+    read_from_aes_mem(3, 1'b1);
+    read_from_aes_mem(4, 1'b1);
+    read_from_aes_mem(5, 1'b1);
+
+    $display("Break---");
+
+    read_from_aes_mem(257, 1'b1);
+    read_from_aes_mem(258, 1'b1);
+    read_from_aes_mem(259, 1'b1);
+    read_from_aes_mem(260, 1'b1);
+    read_from_aes_mem(261, 1'b1);
+    read_from_aes_mem(262, 1'b1);
 
     // $display("Memory written %0h", aes_data_out);
 

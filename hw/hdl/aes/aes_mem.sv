@@ -7,7 +7,8 @@ module aes_mem (
   input wire rst_in,
   
   // aes memory addr to access/write to
-  input wire [9:0] aes_mem_addr_in,
+  input wire [9:0] aes_mem_rd_addr_in,
+  input wire [9:0] aes_mem_wr_addr_in,
 
   // data in to write to mem
   input wire [31:0] data_in,
@@ -30,23 +31,23 @@ module aes_mem (
     .RAM_DEPTH(256 + 1 + 256 + 1),
     .RAM_PERFORMANCE("HIGH_PERFORMANCE")
   ) aes_mem (
-    .addra(aes_mem_addr_in),
-    .dina(data_in),
+    .addra(aes_mem_rd_addr_in),
+    .dina(),
     .clka(clk_in),
-    .wea(aes_mem_we_in),
+    .wea(4'h0),
     .ena(1'b1),
     .rsta(rst_in),
     .regcea(1'b1),
-    .douta(),
+    .douta(data_out),
 
-    .addrb(aes_mem_addr_in),
-    .dinb(),
+    .addrb(aes_mem_wr_addr_in),
+    .dinb(data_in),
     .clkb(clk_in),
-    .web(4'h0),
+    .web(aes_mem_we_in),
     .enb(1'b1),
     .rstb(rst_in),
     .regceb(1'b1),
-    .doutb(data_out)
+    .doutb()
   );
 
 endmodule

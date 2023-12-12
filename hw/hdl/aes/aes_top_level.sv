@@ -9,17 +9,22 @@ module aes_top_level(
 
   input wire [31:0] aes_data_in,
   input wire [3:0] aes_mem_we_in,
-  input wire [9:0] aes_mem_addr_in,
+  
+  input wire [9:0] aes_mem_rd_addr_in,
+  input wire [9:0] aes_mem_wr_addr_in,
 
   output wire [31:0] aes_data_out,
   output wire aes_complete_out
 );
 
-  logic [31:0] aes_mem_data_out, temp_aes_data_in, aes_mem_data_in;
-  logic [9:0] aes_mem_addr, temp_aes_mem_addr;
+  logic [31:0] temp_aes_data_in, aes_mem_data_in;
+  logic [9:0] temp_aes_mem_rd_addr, aes_mem_rd_addr;
+  logic [9:0] temp_aes_mem_wr_addr, aes_mem_wr_addr;
+  logic [31:0] aes_mem_data_out;
   logic [3:0] temp_aes_mem_we, aes_mem_we;
 
-  assign aes_mem_addr = aes_ctrl_in[2] ? temp_aes_mem_addr : aes_mem_addr_in;
+  assign aes_mem_rd_addr = aes_ctrl_in[2] ? temp_aes_mem_rd_addr : aes_mem_rd_addr_in;
+  assign aes_mem_wr_addr = aes_ctrl_in[2] ? temp_aes_mem_wr_addr : aes_mem_wr_addr_in;
   assign aes_mem_data_in = aes_ctrl_in[2] ? temp_aes_data_in : aes_data_in;
   assign aes_mem_we = aes_ctrl_in[2] ? temp_aes_mem_we : aes_mem_we_in;
   assign aes_data_out = aes_mem_data_out;
@@ -32,8 +37,10 @@ module aes_top_level(
 
     .data_in(aes_mem_data_out),
     .data_out(temp_aes_data_in),
+
     .aes_mem_we_out(temp_aes_mem_we),
-    .aes_mem_addr_out(temp_aes_mem_addr),
+    .aes_mem_rd_addr_out(temp_aes_mem_rd_addr),
+    .aes_mem_wr_addr_out(temp_aes_mem_wr_addr),
     .aes_complete_out(aes_complete_out)
   );
   
@@ -41,7 +48,9 @@ module aes_top_level(
     .clk_in(clk_in),
     .rst_in(rst_in),
     
-    .aes_mem_addr_in(aes_mem_addr),
+    .aes_mem_rd_addr_in(aes_mem_rd_addr),
+    .aes_mem_wr_addr_in(aes_mem_wr_addr),
+
     .data_in(aes_mem_data_in),
     .aes_mem_we_in(aes_mem_we),
     .data_out(aes_mem_data_out)
