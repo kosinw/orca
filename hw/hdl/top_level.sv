@@ -65,6 +65,11 @@ module top_level(
     logic [3:0]  ram_write_enable_in;
     logic [31:0] ram_data_out;
 
+    logic [31:0] keyboard_addr_in;
+    logic [31:0] keyboard_data_in;
+    logic [3:0]  keyboard_write_enable_in;
+    logic [31:0] keyboard_data_out;
+
     ////////////////////////////////////////////////////////////
     //
     //  CLOCK STUFF
@@ -159,10 +164,29 @@ module top_level(
         .ram_write_enable_out(ram_write_enable_in),
         .ram_data_in(ram_data_out),
 
-        .keyboard_addr_out(),
-        .keyboard_data_out(),
-        .keyboard_write_enable_out(),
-        .keyboard_data_in()
+        .keyboard_addr_out(keyboard_addr_in),
+        .keyboard_data_out(keyboard_data_in),
+        .keyboard_write_enable_out(keyboard_write_enable_in),
+        .keyboard_data_in(keyboard_data_out)
+    );
+
+    logic kb_valid;
+    logic [7:0] kb_scancode;
+
+    ps2_rx kb (
+        .clk_in(clk_100mhz),
+        .rst_in(sys_rst),
+        .ps2_clk_in(pmodb[2]),
+        .ps2_data_in(pmodb[0]),
+        .valid_out(kb_valid),
+        .error_out(),
+        .scancode_out(kb_scancode)
+    );
+
+    keyboard_ram kb_memory (
+        .clk_in(),
+        .rst_in(),
+        
     );
 
     logic data_memory_debug_valid;
