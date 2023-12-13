@@ -1,4 +1,4 @@
-`include "hdl/aes_defs.sv"
+`include "hdl/aes/aes_defs.sv"
 
 module aes_core_tb;
   logic clk_in;
@@ -143,6 +143,10 @@ module aes_core_tb;
     test(4'd9, 1'b0, aes_128_key0, plaintext3_enc_expected, plaintext3);
     test(4'd10, 1'b0, aes_128_key1, plaintext4_enc_expected, plaintext4);
     test(4'd11, 1'b0, aes_128_key0, plaintext5_enc_expected, plaintext5);
+
+    test(4'd0, 1'b1, aes_128_key0, 128'h0, plaintext0_enc_expected);
+
+    // 128'h7d1a3eb9f7b8421b6b99f0540cb3476f
 
     #100;
 
