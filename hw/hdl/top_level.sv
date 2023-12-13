@@ -204,9 +204,15 @@ module top_level(
     );
 
     keyboard_ram kb_memory (
-        .clk_in(),
-        .rst_in(),
-        
+        .clk_in(clk_50mhz),
+        .rst_in(sys_rst),
+
+        .kb_scancode_in(kb_scancode),
+        .kb_valid_in(kb_valid),
+
+        .cpu_addr_in(keyboard_addr_in),
+        .cpu_write_enable_in(keyboard_write_enable_in),
+        .cpu_data_out(keyboard_data_out)
     );
 
     uart_rx #(.CLOCKS_PER_BAUD(17)) urx (

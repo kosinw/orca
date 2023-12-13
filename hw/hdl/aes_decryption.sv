@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 `default_nettype none
-`include "hdl/aes/aes_defs.sv"
+`include "hdl/aes_defs.sv"
 
 module aes_decryption (
     // Default inputs

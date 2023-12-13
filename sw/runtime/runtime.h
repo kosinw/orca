@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 // mmio addresses
+
 #define MMIO_VIDEO_RAM      0x000020000
 #define MMIO_COUNTER        0x000010000
 #define MMIO_ENTROPY        0x000010004
