@@ -20,6 +20,6 @@ keyboard_getc(uint32_t i)
     if (i < 0 || i >= MMIO_KEYBOARD_LEN)
         return 0;
 
-    volatile uint8_t *buf = (volatile uint8_t*)MMIO_KEYBOARD_BUF;
-    return buf[i];
+    volatile uint32_t *buf = (volatile uint32_t*)MMIO_KEYBOARD_BUF;
+    return (buf[i/4] >> (i % 4)) & 0xff;
 }
