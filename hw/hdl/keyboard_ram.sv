@@ -32,18 +32,33 @@ module keyboard_ram (
   logic [3:0] keyboard_write_enable;
   logic [1:0] keyboard_we_map;
 
-  assign keyboard_we_map = keyboard_ctr[1:0]
+  assign keyboard_we_map = keyboard_ctr[1:0];
+
+  logic [31:0] dina;
 
   always_comb begin
     if (kb_valid_in) begin
       case (keyboard_we_map)
-        2'b00: keyboard_write_enable = 4'h1;
-        2'b01: keyboard_write_enable = 4'h2;
-        2'b10: keyboard_write_enable = 4'h4;
-        2'b11: keyboard_write_enable = 4'h8;
+        2'b00: begin
+          keyboard_write_enable = 4'h1;
+          dina = {24'b0,kb_scancode_in};
+        end
+        2'b01: begin
+          keyboard_write_enable = 4'h2;
+          dina = {16'b0,kb_scancode_in,8'b0};
+        end
+        2'b10: begin
+          keyboard_write_enable = 4'h4;
+          dina = {8'b0,kb_scancode_in,16'b0};
+        end
+        2'b11: begin
+          keyboard_write_enable = 4'h8;
+          dina = {kb_scancode_in,24'b0};
+        end
       endcase
     end else begin
       keyboard_write_enable = 4'h0;
+      dina = 32'h0;
     end
   end
 
@@ -109,7 +124,7 @@ module keyboard_ram (
     .clka(clk_in),
     .rsta(rst_in),
     .addra(keyboard_ctr[6:2]),
-    .dina(kb_scancode_in),
+    .dina(dina),
     .wea(keyboard_write_enable),
     .ena(1'b1),
     .regcea(1'b1),
@@ -117,9 +132,9 @@ module keyboard_ram (
 
     .clkb(clk_in),
     .rstb(rst_in),
-    .addrb(cpu_addr_in[8:2]),
+    .addrb(cpu_addr_in[6:2]),
     .dinb(),
-    .web(1'h0),
+    .web(4'h0),
     .enb(1'b1),
     .regceb(1'b1),
     .doutb(kb_mem_data_out)
