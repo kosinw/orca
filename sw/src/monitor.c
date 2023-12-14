@@ -1,6 +1,7 @@
 #include <runtime.h>
 
-#define START_ADDR      MMIO_AES_BUFFER_IN
+#define START_ADDR      MMIO_AES_CTRL
+// #define START_ADDR      MMIO_AES_BUFFER_IN
 
 void
 main(void)
@@ -9,7 +10,6 @@ main(void)
     keyboard_wrctrl(); // flush the keyboard
 
     while (1) {
-        videoclear();
         videomovecursor(0, 0);
 
         int current_addr = START_ADDR;
@@ -28,6 +28,6 @@ main(void)
         }
 
 
-        nanosleep(30000000);
+        nanosleep(900000000);
     }
 }
