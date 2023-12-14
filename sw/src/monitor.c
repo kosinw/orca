@@ -28,6 +28,6 @@ main(void)
         }
 
 
-        nanosleep(3000000);
+        nanosleep(30000000);
     }
 }
