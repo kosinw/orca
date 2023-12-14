@@ -13,7 +13,7 @@
 #define MMIO_KEYBOARD_CTRL      0x30080
 #define MMIO_KEYBOARD_BUF       0x30000
 #define MMIO_KEYBOARD_LEN       0x80
-#define MMIO_AES_CTRL           0x41000
+#define MMIO_AES_CTRL           0x4F000
 #define MMIO_AES_BUFFER_IN      0x40000
 #define MMIO_AES_BUFFER_OUT     0x40404
 #define MMIO_AES_LEN            0x404
