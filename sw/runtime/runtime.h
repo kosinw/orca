@@ -13,6 +13,10 @@
 #define MMIO_KEYBOARD_CTRL      0x30080
 #define MMIO_KEYBOARD_BUF       0x30000
 #define MMIO_KEYBOARD_LEN       0x80
+#define MMIO_AES_CTRL           0x41000
+#define MMIO_AES_BUFFER_IN      0x40000
+#define MMIO_AES_BUFFER_OUT     0x40404
+#define MMIO_AES_LEN            0x404
 
 // string.c - string manipulation
 int         memcmp(const void*, const void*, unsigned);
@@ -55,7 +59,12 @@ bool        keyboardpoll(uint8_t*, uint32_t*);
 char        keyboarditoa(uint8_t);
 
 // aes.c - aes
-
+void        aescopyin(uint8_t *, uint32_t);     // copy data into aes input buffer
+void        aescopyout(uint8_t*, uint32_t*);    // copy data out of aes output buffer
+void        aesencrypt(void);                   // tell aes coprocessor to encrypt
+void        aesdecrypt(void);                   // tell aes coprocessor to decrypt
+bool        aespoll(void);                      // 001 encrypt 010 decrypt 100 done 000 ack
+void        aesack(void);                       // acknowledge that you have read from aes output buffer
 
 #define KEYBOARD_CTRL_READY         0x01
 #define KEYBOARD_NUM_CHARS(x)        (x >> 1)

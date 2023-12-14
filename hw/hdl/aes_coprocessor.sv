@@ -4,7 +4,7 @@
 module aes_coprocessor (
   input wire clk_in,
   input wire rst_in,
-  
+
   input wire [31:0] cpu_addr_in,
   input wire [31:0] cpu_data_in,
   input wire [3:0] cpu_write_enable_in,
@@ -33,7 +33,7 @@ module aes_coprocessor (
   assign MMIO_AES = {aes_valid_result, aes_decrypt, aes_encrypt};
 
   assign cpu_addr_in_range = (cpu_addr_in[19:16] == 4'h4);
-  assign cpu_addr_is_aes_ctrl_reg = (cpu_addr_in[19:0] == 20'h40300);
+  assign cpu_addr_is_aes_ctrl_reg = (cpu_addr_in[19:0] == 20'h41000);
   assign cpu_write_enable = (cpu_addr_in_range) ? cpu_write_enable_in : 4'h0;
 
   always_comb begin
@@ -69,16 +69,16 @@ module aes_coprocessor (
   aes aes (
     .clk_in(clk_in),
     .rst_in(rst_in),
-    
+
     .aes_ctrl_in(MMIO_AES),
-    
+
     .data_in(aes_data_out),
     .data_out(aes_data_in),
-    
+
     .aes_addr_out(aes_addr_out),
 
     .aes_mem_we_out(aes_write_enable),
-    
+
     .aes_complete_out(aes_complete_out)
   );
 

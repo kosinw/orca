@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps 
+`timescale 1ns / 1ps
 `default_nettype none
 `include "hdl/aes_defs.sv"
 
@@ -31,7 +31,7 @@ module aes(
 
   output logic [ 3:0] aes_mem_we_out,
   output logic [ 9:0] aes_addr_out,
-  
+
   output logic [31:0] data_out,
   output logic aes_complete_out
 );
@@ -85,7 +85,7 @@ module aes(
     case ({mode_decrypt, mode_encrypt})
       2'b01: begin
         mode = `ENCRYPT;
-      end 
+      end
       2'b10: begin
         mode = `DECRYPT;
       end
@@ -94,7 +94,7 @@ module aes(
       end
     endcase
   end
-  
+
   // assign mode = mode_encrypt ? `ENCRYPT : `DECRYPT;
 
   aes_core aes_core(
@@ -117,7 +117,7 @@ module aes(
       aes_mem_wb_ctr <= 0;
 
       aes_complete_out <= 0;
-      
+
       aes_processing_stage <= `RD_DWORD_1;
       aes_mem_rd_stage <= `IDLE;
 
@@ -145,7 +145,7 @@ module aes(
                 aes_mem_rd_stage <= `READ_RESULT;
               end
               `READ_RESULT: begin
-                if (data_in == 128'hDEADBEEF) begin
+                if (data_in == 32'hDEADBEEF) begin
                   aes_processing_stage <= `START_AES;
                 end else begin
                   if (aes_processing_stage == `RD_DWORD_1) begin
@@ -212,7 +212,7 @@ module aes(
         aes_mem_wb_ctr <= 0;
 
         aes_complete_out <= 0;
-        
+
         aes_processing_stage <= `RD_DWORD_1;
         aes_mem_rd_stage <= `IDLE;
 

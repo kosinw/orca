@@ -5,11 +5,11 @@ module aes_mem (
   // default inputs
   input wire clk_in,
   input wire rst_in,
-  
+
   // aes memory addr to access/write to
   // input wire [9:0] aes_mem_rd_addr_in,
   // input wire [9:0] aes_mem_wr_addr_in,
-  
+
   // write enable flag
   // input wire [3:0] aes_mem_we_in,
 
@@ -24,14 +24,14 @@ module aes_mem (
 
   output wire [31:0] cpu_data_out,
   output wire [31:0] aes_data_out
- 
+
   // data in to write to mem
   // input wire [31:0] data_in,
 
   // data out from aes
   // output wire [31:0] data_out
 );
-  
+
   // Each entry is 4 * 8 bits/1 byte
   // 256 entries for aes input ==> each char is 1 byte total of 1024 chars possible
   // 256 entries for aes ouput
