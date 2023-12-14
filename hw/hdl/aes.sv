@@ -136,9 +136,10 @@ module aes(
           data_out = 32'hdeadbeef;
         end else begin
           if (aes_processing_stage == `WB_DWORD_1) data_out = temp_aes_data_out_dword_1;
-          if (aes_processing_stage == `WB_DWORD_2) data_out = temp_aes_data_out_dword_2;
-          if (aes_processing_stage == `WB_DWORD_3) data_out = temp_aes_data_out_dword_3;
-          if (aes_processing_stage == `WB_DWORD_4) data_out = temp_aes_data_out_dword_4;
+          else if (aes_processing_stage == `WB_DWORD_2) data_out = temp_aes_data_out_dword_2;
+          else if (aes_processing_stage == `WB_DWORD_3) data_out = temp_aes_data_out_dword_3;
+          else if (aes_processing_stage == `WB_DWORD_4) data_out = temp_aes_data_out_dword_4;
+          else data_out = 32'h0;
         end
       end 
       default: data_out = 32'h0;

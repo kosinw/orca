@@ -21,13 +21,6 @@ module aes_coprocessor (
   logic [3:0] aes_write_enable;
   logic [31:0] aes_mem_data_out;
 
-  // cpu_data_in bit decompose if is for aes_ctrl_reg
-  logic cpu_data_valid_result, cpu_data_aes_decrypt, cpu_data_aes_encrypt;
-
-  assign cpu_data_valid_result = cpu_data_in[2];
-  assign cpu_data_aes_decrypt = cpu_data_in[1];
-  assign cpu_data_aes_encrypt = cpu_data_in[0];
-
   // registers to make up MMIO_AES register
   logic [3:0] aes_processing_stage;
   logic aes_processing, aes_valid_result, aes_decrypt, aes_encrypt;
@@ -53,20 +46,27 @@ module aes_coprocessor (
       end else begin
         cpu_data_out = temp_cpu_data_out;
       end
+    end else begin
+      cpu_data_out = 32'h0;
     end
   end
 
-  always_comb begin
-    if (aes_ctrl_write_enable) begin
-      aes_valid_result = cpu_data_valid_result;
-      aes_decrypt = cpu_data_aes_decrypt;
-      aes_encrypt = cpu_data_aes_encrypt;
-    end
-
-    if (aes_complete_out) begin
-      aes_valid_result = 1;
-      aes_decrypt = 0;
-      aes_encrypt = 0;
+  always_ff @(posedge clk_in) begin
+    if (rst_in) begin
+      aes_valid_result <= 0;
+      aes_decrypt <= 0;
+      aes_encrypt <= 0;
+    end else begin
+      if (aes_ctrl_write_enable) begin
+        aes_valid_result <= cpu_data_in[2];
+        aes_decrypt <= cpu_data_in[1];
+        aes_encrypt <= cpu_data_in[0];
+      end
+      if (aes_complete_out) begin
+        aes_valid_result <= 1;
+        aes_decrypt <= 0;
+        aes_encrypt <= 0;
+      end
     end
   end
 
