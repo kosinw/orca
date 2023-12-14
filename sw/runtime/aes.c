@@ -35,8 +35,8 @@ void
 aescopyout(uint8_t *buffer, uint32_t *size_out)
 {
     // go to start of
-    uint8_t *aes_buffer_out = (uint8_t*)MMIO_AES_BUFFER_OUT;
-    uint32_t *out_buffer = (uint32_t*)buffer;
+    uint32_t *aes_buffer_out = (uint32_t*)MMIO_AES_BUFFER_OUT;
+    uint32_t *buffer_out = (uint32_t*)buffer;
 
     uint32_t copied = 0;
 
@@ -47,7 +47,7 @@ aescopyout(uint8_t *buffer, uint32_t *size_out)
         if (aes_buffer_out[copied] == 0xdeadbeef)
             break;
 
-        out_buffer[copied] = aes_buffer_out[copied];
+        buffer_out[copied] = aes_buffer_out[copied];
         copied++;
     }
 
@@ -74,9 +74,6 @@ bool
 aespoll(void)
 {
     uint8_t *aes_ctrl_reg = (uint8_t *)MMIO_AES_CTRL;
-    if (*aes_ctrl_reg != 0) {
-        printf("\naes_ctrl_reg: %p", *aes_ctrl_reg);
-    }
     return (*aes_ctrl_reg & 0b100) != 0;
 }
 

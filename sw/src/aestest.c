@@ -26,6 +26,8 @@ main(void)
     uint32_t aeslenout = 0;
     uint32_t len = 0;
 
+    uint32_t *buf = (uint32_t*)aesout;
+
     videoinit(FOREGROUND_WHITE | BACKGROUND_BLACK);
     keyboard_wrctrl(); // flush the keyboard
 
@@ -35,9 +37,11 @@ main(void)
         // If hit update, then run aes encrypt and wait in a loop until
         // its ready
         if (keyboardpoll(kbd, &len)) {
+            videoclear();
             for (int i = 0; i < len; i++) {
                 if (kbd[i] == ENTER_KEY) { // enter
-                    printf("\nstarting encryption!");
+                    memset(aesout, 0, MMIO_AES_LEN);
+                    printf("\n\nstarting encryption!");
                     aescopyin(aesin, aeslen);
                     aesencrypt();
                     while (!aespoll()) {
@@ -47,12 +51,20 @@ main(void)
                     aesack();
                     printf("\nfinished encryption!");
                 } else if (kbd[i] == CAPS_LOCK_KEY) {
-
+                    printf("\n\nstarting decryption!");
+                    aescopyin(aesout, aeslenout);
+                    aesdecrypt();
+                    while (!aespoll()) {
+                        nanosleep(100);
+                    }
+                    aescopyout(aesout, &aeslenout);
+                    aesack();
+                    printf("\nfinishing decryption!");
                 } else {
                     if (kbd[i] == BACKSPACE) {
-                        if (aeslen > 0) {
+                        if (aeslen >= 0) {
                             aesin[aeslen] = '\x00';
-                            aeslen--;
+                            aeslen = (aeslen == 0) ? 0 : aeslen-1;
                         }
                         continue;
                     }
@@ -66,11 +78,16 @@ main(void)
         // Render the screen
         // videoclear();
         videomovecursor(20, 0);
-        printf("aes output buffer: ");
-        printf("%s", aesout);
+        printf("aes output buffer (as hex):\n");
+        for (int i = 0; i < aeslenout; i += 4) {
+            printf("%p ", buf[i / 4]);
+        }
+        printf("\n");
 
-        videomovecursor(0, 0);
-        for (int i = 0; i < 160; i++) { videoputc(' '); }
+        videomovecursor(40, 0);
+        printf("aes output buffer (as string): ");
+        printf("%s\n", aesout);
+
         videomovecursor(0, 0);
         printf("enter your message: ");
         printf("%s", aesin);
