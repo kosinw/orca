@@ -16,16 +16,13 @@ module aes_coprocessor (
   logic aes_complete_out;
 
   // aes module inputs and outputs, and aes_mem inputs
-  logic [31:0] temp_aes_data_in, aes_mem_data_in;
-  logic [9:0] temp_aes_mem_rd_addr, aes_mem_rd_addr;
-  logic [9:0] temp_aes_mem_wr_addr, aes_mem_wr_addr;
-  logic [3:0] temp_aes_mem_we, aes_mem_we;
+  logic [31:0] aes_data_in, aes_data_out, temp_cpu_data_out;
+  logic [9:0] aes_addr_out;
+  logic [3:0] aes_write_enable;
   logic [31:0] aes_mem_data_out;
 
   // registers to make up MMIO_AES register
   logic aes_valid_result, aes_decrypt, aes_encrypt;
-
-  logic select_temp_regs;
 
   // register to check whether cpu_addr_in is in range
   logic cpu_addr_in_range, cpu_addr_is_aes_ctrl_reg;
@@ -39,19 +36,12 @@ module aes_coprocessor (
   assign cpu_addr_is_aes_ctrl_reg = (cpu_addr_in[19:0] == 20'h40300);
   assign cpu_write_enable = (cpu_addr_in_range) ? cpu_write_enable_in : 4'h0;
 
-  assign select_temp_regs = (({aes_decrypt, aes_encrypt} == 2'b01) || ({aes_decrypt, aes_encrypt} == 2'b10));
-
-  assign aes_mem_data_in = select_temp_regs ? temp_aes_data_in : cpu_data_in;
-  assign aes_mem_rd_addr = select_temp_regs ? temp_aes_mem_rd_addr : cpu_addr_in[9:0];
-  assign aes_mem_wr_addr = select_temp_regs ? temp_aes_mem_wr_addr : cpu_addr_in[9:0];
-  assign aes_mem_we = select_temp_regs ? temp_aes_mem_we : cpu_write_enable;
-
   always_comb begin
     if (cpu_addr_in_range) begin
       if (cpu_addr_is_aes_ctrl_reg) begin
         cpu_data_out = MMIO_AES;
       end else begin
-        cpu_data_out = aes_mem_data_out;
+        cpu_data_out = temp_cpu_data_out;
       end
     end
   end
@@ -82,12 +72,12 @@ module aes_coprocessor (
     
     .aes_ctrl_in(MMIO_AES),
     
-    .data_in(aes_mem_data_out),
-    .data_out(temp_aes_data_in),
+    .data_in(aes_data_out),
+    .data_out(aes_data_in),
     
-    .aes_mem_rd_addr_out(temp_aes_mem_rd_addr),
-    .aes_mem_wr_addr_out(temp_aes_mem_wr_addr),
-    .aes_mem_we_out(temp_aes_mem_we),
+    .aes_addr_out(aes_addr_out),
+
+    .aes_mem_we_out(aes_write_enable),
     
     .aes_complete_out(aes_complete_out)
   );
@@ -96,11 +86,16 @@ module aes_coprocessor (
     .clk_in(clk_in),
     .rst_in(rst_in),
 
-    .aes_mem_rd_addr_in(aes_mem_rd_addr),
-    .aes_mem_wr_addr_in(aes_mem_wr_addr),
+    .cpu_addr_in(cpu_addr_in[11:2]),
+    .aes_addr_in(aes_addr_out),
 
-    .data_in(aes_mem_data_in),
-    .aes_mem_we_in(aes_mem_we),
-    .data_out(aes_mem_data_out)
+    .cpu_we_in(cpu_write_enable),
+    .aes_we_in(aes_write_enable),
+
+    .cpu_data_in(cpu_data_in),
+    .aes_data_in(aes_data_in),
+
+    .cpu_data_out(temp_cpu_data_out),
+    .aes_data_out(aes_data_out)
   );
 endmodule

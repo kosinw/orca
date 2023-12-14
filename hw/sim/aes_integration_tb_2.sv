@@ -71,28 +71,28 @@ module aes_integration_2_tb;
     $display("\n*** Writing to AES Input Buffer ***\n");
 
     write_to_aes_mem(32'h0004_0000, 32'h6b2ee973, 4'hf);
-    write_to_aes_mem(32'h0004_0001, 32'hc1403d93, 4'hf);
-    write_to_aes_mem(32'h0004_0002, 32'hbe9f7e17, 4'hf);
-    write_to_aes_mem(32'h0004_0003, 32'he296112a, 4'hf);
-    write_to_aes_mem(32'h0004_0004, 32'hae1e9e45, 4'hf);
-    write_to_aes_mem(32'h0004_0005, 32'h2d03b7af, 4'hf);
-    write_to_aes_mem(32'h0004_0006, 32'h8aac6f8e, 4'hf);
-    write_to_aes_mem(32'h0004_0007, 32'h579cac51, 4'hf);
-    write_to_aes_mem(32'h0004_0008, 32'hdeadbeef, 4'hf);
+    write_to_aes_mem(32'h0004_0004, 32'hc1403d93, 4'hf);
+    write_to_aes_mem(32'h0004_0008, 32'hbe9f7e17, 4'hf);
+    write_to_aes_mem(32'h0004_000c, 32'he296112a, 4'hf);
+    write_to_aes_mem(32'h0004_0010, 32'hae1e9e45, 4'hf);
+    write_to_aes_mem(32'h0004_0014, 32'h2d03b7af, 4'hf);
+    write_to_aes_mem(32'h0004_0018, 32'h8aac6f8e, 4'hf);
+    write_to_aes_mem(32'h0004_001d, 32'h579cac51, 4'hf);
+    write_to_aes_mem(32'h0004_0020, 32'hdeadbeef, 4'hf);
 
     #100;
 
     $display("\n*** Checking AES Input Buffer ***\n");
 
     read_from_aes_mem(32'h0004_0000, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0001, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0002, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0003, 4'h0, 1'b1);
     read_from_aes_mem(32'h0004_0004, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0005, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0006, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0007, 4'h0, 1'b1);
     read_from_aes_mem(32'h0004_0008, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_000c, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0010, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0014, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0018, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_001d, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0020, 4'h0, 1'b1);
 
     #100;
 
@@ -108,43 +108,43 @@ module aes_integration_2_tb;
 
     $display("\n*** Reading AES Output Buffer After Encryption***\n");
 
-    read_from_aes_mem(32'h0004_0101, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0102, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0103, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0104, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0105, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0106, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0107, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0108, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0109, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0404, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0408, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_040c, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0410, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0414, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0418, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_041c, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0420, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0424, 4'h0, 1'b1);
 
     #100;
 
     $display("\n*** Writing Ciphertext ***\n");
 
     write_to_aes_mem(32'h0004_0000, 32'h3a0da824, 4'hf);
-    write_to_aes_mem(32'h0004_0001, 32'hd77a9e66, 4'hf);
-    write_to_aes_mem(32'h0004_0002, 32'h7b36caef, 4'hf);
-    write_to_aes_mem(32'h0004_0003, 32'hb460f397, 4'hf);
-    write_to_aes_mem(32'h0004_0004, 32'hf503e796, 4'hf);
-    write_to_aes_mem(32'h0004_0005, 32'hd3b985fd, 4'hf);
-    write_to_aes_mem(32'h0004_0006, 32'hd56989ba, 4'hf);
-    write_to_aes_mem(32'h0004_0007, 32'h859d5aaf, 4'hf);
-    write_to_aes_mem(32'h0004_0008, 32'hdeadbeef, 4'hf);
+    write_to_aes_mem(32'h0004_0004, 32'hd77a9e66, 4'hf);
+    write_to_aes_mem(32'h0004_0008, 32'h7b36caef, 4'hf);
+    write_to_aes_mem(32'h0004_000c, 32'hb460f397, 4'hf);
+    write_to_aes_mem(32'h0004_0010, 32'hf503e796, 4'hf);
+    write_to_aes_mem(32'h0004_0014, 32'hd3b985fd, 4'hf);
+    write_to_aes_mem(32'h0004_0018, 32'hd56989ba, 4'hf);
+    write_to_aes_mem(32'h0004_001d, 32'h859d5aaf, 4'hf);
+    write_to_aes_mem(32'h0004_0020, 32'hdeadbeef, 4'hf);
 
     #100;
 
     $display("\n*** Checking AES Input Buffer ***\n");
 
     read_from_aes_mem(32'h0004_0000, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0001, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0002, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0003, 4'h0, 1'b1);
     read_from_aes_mem(32'h0004_0004, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0005, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0006, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0007, 4'h0, 1'b1);
     read_from_aes_mem(32'h0004_0008, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_000c, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0010, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0014, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0018, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_001d, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0020, 4'h0, 1'b1);
 
     #100;
 
@@ -154,15 +154,15 @@ module aes_integration_2_tb;
 
     wait_complete();
 
-    read_from_aes_mem(32'h0004_0101, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0102, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0103, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0104, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0105, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0106, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0107, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0108, 4'h0, 1'b1);
-    read_from_aes_mem(32'h0004_0109, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0404, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0408, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_040c, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0410, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0414, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0418, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_041c, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0420, 4'h0, 1'b1);
+    read_from_aes_mem(32'h0004_0424, 4'h0, 1'b1);
 
     $display("Finishing simulation");
     $finish;

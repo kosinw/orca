@@ -30,8 +30,7 @@ module aes(
   input wire [31:0] data_in,
 
   output logic [ 3:0] aes_mem_we_out,
-  output logic [ 9:0] aes_mem_rd_addr_out,
-  output logic [ 9:0] aes_mem_wr_addr_out,
+  output logic [ 9:0] aes_addr_out,
   
   output logic [31:0] data_out,
   output logic aes_complete_out
@@ -123,8 +122,7 @@ module aes(
       aes_mem_rd_stage <= `IDLE;
 
       temp_aes_data_in <= 0;
-      aes_mem_rd_addr_out <= 0;
-      aes_mem_wr_addr_out <= 0;
+      aes_addr_out <= 0;
       aes_mem_we_out <= 0;
 
       init_aes <= 0;
@@ -137,7 +135,7 @@ module aes(
             aes_mem_we_out <= 4'h0;
             case (aes_mem_rd_stage)
               `IDLE: begin
-                aes_mem_rd_addr_out <= AES_INPUT_BASE_ADDR + aes_mem_rd_ctr;
+                aes_addr_out <= AES_INPUT_BASE_ADDR + aes_mem_rd_ctr;
                 aes_mem_rd_stage <= `CYCLE_1;
               end
               `CYCLE_1: begin
@@ -180,12 +178,12 @@ module aes(
             // once we have a valid result
             if (aes_valid_result) begin
               aes_processing_stage <= aes_processing_stage + 1;
-              aes_mem_wr_addr_out <= AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
+              aes_addr_out <= AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
             end
           end
           `WB_DWORD_1, `WB_DWORD_2, `WB_DWORD_3, `WB_DWORD_4: begin
             aes_mem_we_out <= 4'hf;
-            aes_mem_wr_addr_out <= AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
+            aes_addr_out <= AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
             if (aes_mem_wb_ctr == aes_mem_rd_ctr) begin
               data_out <= 32'hDEADBEEF;
               aes_complete_out <= 1;
@@ -219,8 +217,7 @@ module aes(
         aes_mem_rd_stage <= `IDLE;
 
         temp_aes_data_in <= 0;
-        aes_mem_rd_addr_out <= 0;
-        aes_mem_wr_addr_out <= 0;
+        aes_addr_out <= 0;
         aes_mem_we_out <= 0;
 
         init_aes <= 0;
