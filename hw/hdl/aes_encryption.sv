@@ -28,6 +28,12 @@ module aes_encryption (
   // Initialize stage for which stage within a round it is in
   logic [2:0] stage;
 
+  // logic temp_next_out;
+
+  // assign next_round_out = temp_next_out || (encrypting != `ROUND_INIT);
+  // assign next_round_out = (round == `ROUND_INIT || (stage == `ADD_ROUND_KEY && round != `ROUND_10));
+  assign next_round_out = ((encrypting && round == `ROUND_INIT) || (stage == `ADD_ROUND_KEY && round != `ROUND_10));
+
   assign round = round_in;
 
   // Initialize some temporary variables
@@ -146,7 +152,7 @@ module aes_encryption (
     if (rst_in) begin
       stage <= `IDLE;
       // round_key <= 128'h0;
-      next_round_out <= 1'b0;
+      // next_round_out <= 1'b0;
     end else begin
       // Upon initializing encryption, set round stage to SubBytes
       if (init_in) begin
@@ -162,7 +168,7 @@ module aes_encryption (
               // original temp_data contains data_in
               // new temp_data contains data_in (XOR) round_key
               temp_data <= temp_data ^ key_in;
-              next_round_out <= 1'b1;
+              // next_round_out <= 1'b1;
               // round <= `ROUND_1;
             end
             `ROUND_1, `ROUND_2, `ROUND_3, `ROUND_4, `ROUND_5, `ROUND_6, `ROUND_7, `ROUND_8, `ROUND_9, `ROUND_10: begin
@@ -172,7 +178,7 @@ module aes_encryption (
                   // new temp_data contains the subbytes result
                   temp_data <= temp_subbytes_result;
                   stage <= `SHIFT_ROWS;
-                  next_round_out <= 1'b0;
+                  // next_round_out <= 1'b0;
                 end
                 `SHIFT_ROWS: begin
                   temp_data <= {
@@ -209,7 +215,7 @@ module aes_encryption (
                     // Otherwise, cycle again
                   end else begin
                     stage <= `SUB_BYTES;
-                    next_round_out <= 1'b1;
+                    // next_round_out <= 1'b1;
                     // round <= round + 1;
                   end
                 end

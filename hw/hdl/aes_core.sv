@@ -42,7 +42,7 @@ module aes_core (
 
   // round - what round of the encryption/decryption it is currently in
   // key_memory_round_rd_in - the round to read the key in aes_key_memory module
-  logic [3:0] round, key_memory_round_rd_in;
+  logic [3:0] temp_round, round, key_memory_round_rd_in;
 
   // next_round - general flag for when it is going to the next round
   // next_round_decrypt - next round flag for decryption
@@ -114,22 +114,31 @@ module aes_core (
   );
 
   // combinational logic to handle the increment of rounds and resetting of rounds
-  always_comb begin
-    if (next_round) begin
-      round = round + 1;
-    end
-    if (valid || rst_in) begin
-      round = `ROUND_INIT;
-    end
-  end
+  // always_comb begin
+  //   if (next_round) begin
+  //     round = round + 1;
+  //   end
+  //   if (valid || rst_in) begin
+  //     round = `ROUND_INIT;
+  //   end
+  // end
+
+  assign round = temp_round;
 
   // sequential logic to handle the when the aes should start
   always_ff @(posedge clk_in) begin
     if (rst_in) begin
       start_aes <= 1'b0;
+      temp_round <= `ROUND_INIT;
     end else begin
       if (init_in) begin
         temp_data_in <= data_in;
+      end
+      if (valid) begin
+        temp_round <= `ROUND_INIT;
+      end
+      if (next_round) begin
+        temp_round <= temp_round + 1;
       end
       if (key_expanded) begin
         start_aes <= 1'b1;
