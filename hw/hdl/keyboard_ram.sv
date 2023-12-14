@@ -29,11 +29,29 @@ module keyboard_ram (
   // counter of num of available scancodes from last polling
   logic [6:0] keyboard_ctr;
 
+  logic [3:0] keyboard_write_enable;
+  logic [1:0] keyboard_we_map;
+
+  assign keyboard_we_map = keyboard_ctr[1:0]
+
+  always_comb begin
+    if (kb_valid_in) begin
+      case (keyboard_we_map)
+        2'b00: keyboard_write_enable = 4'h1;
+        2'b01: keyboard_write_enable = 4'h2;
+        2'b10: keyboard_write_enable = 4'h4;
+        2'b11: keyboard_write_enable = 4'h8;
+      endcase
+    end else begin
+      keyboard_write_enable = 4'h0;
+    end
+  end
+
   // keyboard write enable in - wired to kb_valid_in
   logic kb_we_in;
 
   // data output from kb_ram
-  logic [7:0] kb_mem_data_out;
+  logic [31:0] kb_mem_data_out;
 
   // keyboard control register
   // bits 7-1: keyboard_ctr
@@ -82,23 +100,24 @@ module keyboard_ram (
   end
 
 
-  xilinx_true_dual_port_read_first_2_clock_ram #(
-    .RAM_WIDTH(8),
-    .RAM_DEPTH(128),
+  xilinx_true_dual_port_read_first_byte_write_2_clock_ram #(
+    .NB_COL(4),
+    .COL_WIDTH(8),
+    .RAM_DEPTH(32),
     .RAM_PERFORMANCE("HIGH_PERFORMANCE")
   ) kb_ram (
     .clka(clk_in),
     .rsta(rst_in),
-    .addra(keyboard_ctr),
+    .addra(keyboard_ctr[6:2]),
     .dina(kb_scancode_in),
-    .wea(kb_we_in),
+    .wea(keyboard_write_enable),
     .ena(1'b1),
     .regcea(1'b1),
     .douta(),
 
     .clkb(clk_in),
     .rstb(rst_in),
-    .addrb(cpu_addr_in[6:0]),
+    .addrb(cpu_addr_in[8:2]),
     .dinb(),
     .web(1'h0),
     .enb(1'b1),
