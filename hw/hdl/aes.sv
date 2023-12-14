@@ -33,7 +33,8 @@ module aes(
   output logic [ 9:0] aes_addr_out,
 
   output logic [31:0] data_out,
-  output logic aes_complete_out
+  output logic aes_complete_out,
+  output logic aes_ctrl_init_out
 );
 
   localparam AES_INPUT_BASE_ADDR = 0;
@@ -86,6 +87,7 @@ module aes(
   assign mode_encrypt = aes_ctrl_in[0];
   assign mode_decrypt = aes_ctrl_in[1];
   assign aes_ctrl_init = (mode_encrypt || mode_decrypt) ? 1'b1 : 1'b0;
+  assign aes_ctrl_init_out = aes_ctrl_init;
 
   // get the aes mode
   always_comb begin

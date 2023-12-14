@@ -48,6 +48,7 @@ module aes_integration_2_tb;
     do_while = 1;
     while (do_while) begin
       read_from_aes_mem(32'h0004_1000, 4'h0, 1'b0);
+      $display("AES Control Reg: %0b", cpu_data_out);
       if (cpu_data_out[2]) begin
         do_while = 0;
       end
