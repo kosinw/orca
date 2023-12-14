@@ -8,6 +8,8 @@ module keyboard_top_level_tb;
   logic [3:0] cpu_write_enable_in;
   logic [31:0] cpu_data_out;
 
+  logic [6:0] buffer_ctr;
+
   localparam integer H_SCANCODE = 11'b11_00110011_0;
   localparam integer E_SCANCODE = 11'b11_00100100_0;
   localparam integer BAD_SCANCODE = 11'b11_00110100_0;
@@ -46,6 +48,7 @@ module keyboard_top_level_tb;
   endtask
 
   task read_from_kb_mem(input [31:0] addr);
+    $display("Address: %0h", addr);
     cpu_addr_in = addr;
     #10;
     #10;
@@ -65,6 +68,8 @@ module keyboard_top_level_tb;
     rst = 1;
     #20;
     rst = 0;
+
+    read_from_kb_mem(32'h1_0000);
 
     #180_239;
 
@@ -108,6 +113,24 @@ module keyboard_top_level_tb;
     ps2_data = 1'b1;
 
     read_from_kb_mem(32'h3_0080);
+
+    if (cpu_data_out[0]) begin
+      buffer_ctr = cpu_data_out[7:1];
+    end
+
+    for (integer i = 0; i < buffer_ctr; i = i + 1) begin
+      read_from_kb_mem(32'h3_0000 + i);
+    end
+
+    #100;
+
+    write_to_kb_mem(32'h3_0080, 4'hf);  
+
+    #100;
+
+    read_from_kb_mem(32'h3_0080);
+
+    #10000;
 
     $display("Finishing simulation...");
     $finish;
