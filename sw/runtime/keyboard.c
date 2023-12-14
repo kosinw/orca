@@ -35,7 +35,7 @@ keyboard_getc(uint32_t i)
         return 0;
 
     volatile uint8_t *buf = (volatile uint8_t*)MMIO_KEYBOARD_BUF;
-    return buf[i*4];
+    return buf[i];
 }
 
 bool
