@@ -37,6 +37,7 @@ main(void)
         if (keyboardpoll(kbd, &len)) {
             for (int i = 0; i < len; i++) {
                 if (kbd[i] == ENTER_KEY) { // enter
+                    printf("\nstarting encryption!");
                     aescopyin(aesin, aeslen);
                     aesencrypt();
                     while (!aespoll()) {
@@ -44,6 +45,7 @@ main(void)
                     }
                     aescopyout(aesout, &aeslenout);
                     aesack();
+                    printf("\nfinished encryption!");
                 } else if (kbd[i] == CAPS_LOCK_KEY) {
 
                 } else {

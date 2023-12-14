@@ -46,17 +46,27 @@ main(void)
     videoinit(BACKGROUND_BLUE | FOREGROUND_WHITE);
     videosetcolumn(1);
 
+    printf("unsorted array: [");
     for (int i = 0; i < ARRAYCOUNT(array); i++) {
-        printf("%d ", array[i]);
+        printf("%d", array[i]);
+        if (i != ARRAYCOUNT(array) - 1) {
+            printf(", ");
+        }
     }
+    printf("]");
 
     printf("\n");
 
     quicksort(array, 0, ARRAYCOUNT(array) - 1);
 
+    printf("  sorted array: [");
     for (int i = 0; i < ARRAYCOUNT(array); i++) {
-        printf("%d ", array[i]);
+        printf("%d", array[i]);
+        if (i != ARRAYCOUNT(array) - 1) {
+            printf(", ");
+        }
     }
+    printf("]");
 
     videoenablecursor(1);
 }

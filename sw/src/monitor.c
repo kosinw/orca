@@ -2,6 +2,7 @@
 
 #define START_ADDR      MMIO_AES_CTRL
 // #define START_ADDR      MMIO_AES_BUFFER_IN
+// #define START_ADDR      MMIO_AES_BUFFER_OUT
 
 void
 main(void)
