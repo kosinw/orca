@@ -74,7 +74,9 @@ bool
 aespoll(void)
 {
     uint8_t *aes_ctrl_reg = (uint8_t *)MMIO_AES_CTRL;
-    // printf("%p\n", *aes_ctrl_reg);
+    if (*aes_ctrl_reg != 0) {
+        printf("\naes_ctrl_reg: %p", *aes_ctrl_reg);
+    }
     return (*aes_ctrl_reg & 0b100) != 0;
 }
 
