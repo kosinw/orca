@@ -118,7 +118,7 @@ module aes_core (
     if (next_round) begin
       round = round + 1;
     end
-    if (valid) begin
+    if (valid || rst_in) begin
       round = `ROUND_INIT;
     end
   end
@@ -126,7 +126,6 @@ module aes_core (
   // sequential logic to handle the when the aes should start
   always_ff @(posedge clk_in) begin
     if (rst_in) begin
-      round <= `ROUND_INIT;
       start_aes <= 1'b0;
     end else begin
       if (init_in) begin

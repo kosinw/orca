@@ -78,16 +78,16 @@ module aes_integration_tb;
 
     aes_mem_we = 4'h0;
 
-    // read_from_aes_mem(0);
-    // read_from_aes_mem(1);
-    // read_from_aes_mem(2);
-    // read_from_aes_mem(3);
-    // read_from_aes_mem(4);
-    // read_from_aes_mem(5, 1'b0);
+    read_from_aes_mem(0, 1'b1);
+    read_from_aes_mem(1, 1'b1);
+    read_from_aes_mem(2, 1'b1);
+    read_from_aes_mem(3, 1'b1);
+    read_from_aes_mem(4, 1'b1);
+    read_from_aes_mem(5, 1'b1);
 
     #100;
 
-    aes_ctrl = 3'b101;
+    aes_ctrl = 3'b001;
 
     wait_complete();
 

@@ -85,6 +85,11 @@ module top_level(
     logic [3:0]  keyboard_write_enable_in;
     logic [31:0] keyboard_data_out;
 
+    logic [31:0] aes_coprocessor_addr_in;
+    logic [31:0] aes_coprocessor_data_in;
+    logic [3:0]  aes_coprocessor_write_enable_in;
+    logic [31:0] aes_coprocessor_data_out;
+
     ////////////////////////////////////////////////////////////
     //
     //  CLOCK STUFF
@@ -161,6 +166,22 @@ module top_level(
 
     ////////////////////////////////////////////////////////////
     //
+    //  AES COPROCESSOR
+    //
+    ////////////////////////////////////////////////////////////
+
+    aes_coprocessor aes_coprocessor (
+        .clk_in(clk_50mhz),
+        .rst_in(sys_rst),
+
+        .cpu_addr_in(aes_coprocessor_addr_in),
+        .cpu_data_in(aes_coprocessor_data_in),
+        .cpu_write_enable_in(aes_coprocessor_write_enable_in),
+        .cpu_data_out(aes_coprocessor_data_out)
+    );
+
+    ////////////////////////////////////////////////////////////
+    //
     //  MEMORY + PERIPHERALS
     //
     ////////////////////////////////////////////////////////////
@@ -187,9 +208,17 @@ module top_level(
         .keyboard_addr_out(keyboard_addr_in),
         .keyboard_data_out(keyboard_data_in),
         .keyboard_write_enable_out(keyboard_write_enable_in),
-        .keyboard_data_in(keyboard_data_out)
+        .keyboard_data_in(keyboard_data_out),
+
+        .aes_coprocessor_addr_out(aes_coprocessor_addr_in),
+        .aes_coprocessor_data_out(aes_coprocessor_data_in),
+        .aes_coprocessor_write_enable_out(aes_coprocessor_write_enable_in),
+        .aes_coprocessor_data_in(aes_coprocessor_data_out)
     );
 
+    // Keyboard Peripheral
+
+    // registers to handle ps2_rx outputs
     logic kb_valid;
     logic [7:0] kb_scancode;
 
@@ -203,7 +232,7 @@ module top_level(
         .scancode_out(kb_scancode)
     );
 
-    keyboard_ram kb_memory (
+    keyboard_ram kb_ram (
         .clk_in(clk_50mhz),
         .rst_in(sys_rst),
 
