@@ -64,6 +64,9 @@ printf(char *fmt, ...)
     case 'p':
       printptr(va_arg(ap, uint32_t));
       break;
+    case 'c':
+      videoputc(va_arg(ap, int));
+      break;
     case 's':
       if((s = va_arg(ap, char*)) == 0)
         s = "(null)";

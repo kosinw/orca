@@ -27,7 +27,13 @@ module memory_controller(
     output logic [31:0] keyboard_addr_out,
     output logic [31:0] keyboard_data_out,
     output logic [3:0]  keyboard_write_enable_out,
-    input wire   [31:0] keyboard_data_in
+    input wire   [31:0] keyboard_data_in,
+
+    // aes coprocessor module port
+    output logic [31:0] aes_coprocessor_addr_out,
+    output logic [31:0] aes_coprocessor_data_out,
+    output logic [3:0]  aes_coprocessor_write_enable_out,
+    input wire   [31:0] aes_coprocessor_data_in
 );
     assign video_addr_out = cpu_addr_in;
     assign video_data_out = cpu_data_in;
@@ -40,6 +46,10 @@ module memory_controller(
     assign keyboard_addr_out = cpu_addr_in;
     assign keyboard_data_out = cpu_data_in;
     assign keyboard_write_enable_out = cpu_write_enable_in;
+
+    assign aes_coprocessor_addr_out = cpu_addr_in;
+    assign aes_coprocessor_data_out = cpu_data_in;
+    assign aes_coprocessor_write_enable_out = cpu_write_enable_in;
 
     logic [3:0] cpu_addr_top;
 
@@ -58,7 +68,8 @@ module memory_controller(
             4'h0, 4'h1: cpu_data_out = ram_data_in;
             4'h2:       cpu_data_out = video_data_in;
             4'h3:       cpu_data_out = keyboard_data_in;
-            // todo aes and spi
+            4'h4:       cpu_data_out = aes_coprocessor_data_in;
+            // spi
             default:    cpu_data_out = ram_data_in;
         endcase
     end

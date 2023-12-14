@@ -4,7 +4,8 @@ import sys
 import serial
 import time
 
-PORT = "/dev/cu.usbserial-8874292302161"
+# PORT = "/dev/cu.usbserial-8874292302161"
+PORT = "/dev/cu.usbserial-8874292301FD1"
 BAUDRATE = 3000000
 
 if __name__ == "__main__":

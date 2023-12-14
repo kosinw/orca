@@ -80,6 +80,16 @@ module top_level(
     logic [3:0]  ram_write_enable_in;
     logic [31:0] ram_data_out;
 
+    logic [31:0] keyboard_addr_in;
+    logic [31:0] keyboard_data_in;
+    logic [3:0]  keyboard_write_enable_in;
+    logic [31:0] keyboard_data_out;
+
+    logic [31:0] aes_coprocessor_addr_in;
+    logic [31:0] aes_coprocessor_data_in;
+    logic [3:0]  aes_coprocessor_write_enable_in;
+    logic [31:0] aes_coprocessor_data_out;
+
     ////////////////////////////////////////////////////////////
     //
     //  CLOCK STUFF
@@ -156,6 +166,22 @@ module top_level(
 
     ////////////////////////////////////////////////////////////
     //
+    //  AES COPROCESSOR
+    //
+    ////////////////////////////////////////////////////////////
+
+    aes_coprocessor aes_coprocessor (
+        .clk_in(clk_50mhz),
+        .rst_in(sys_rst),
+
+        .cpu_addr_in(aes_coprocessor_addr_in),
+        .cpu_data_in(aes_coprocessor_data_in),
+        .cpu_write_enable_in(aes_coprocessor_write_enable_in),
+        .cpu_data_out(aes_coprocessor_data_out)
+    );
+
+    ////////////////////////////////////////////////////////////
+    //
     //  MEMORY + PERIPHERALS
     //
     ////////////////////////////////////////////////////////////
@@ -179,10 +205,54 @@ module top_level(
         .ram_write_enable_out(ram_write_enable_in),
         .ram_data_in(ram_data_out),
 
-        .keyboard_addr_out(),
-        .keyboard_data_out(),
-        .keyboard_write_enable_out(),
-        .keyboard_data_in()
+        .keyboard_addr_out(keyboard_addr_in),
+        .keyboard_data_out(keyboard_data_in),
+        .keyboard_write_enable_out(keyboard_write_enable_in),
+        .keyboard_data_in(keyboard_data_out),
+
+        .aes_coprocessor_addr_out(aes_coprocessor_addr_in),
+        .aes_coprocessor_data_out(aes_coprocessor_data_in),
+        .aes_coprocessor_write_enable_out(aes_coprocessor_write_enable_in),
+        .aes_coprocessor_data_in(aes_coprocessor_data_out)
+    );
+
+    // Keyboard Peripheral
+
+    // registers to handle ps2_rx outputs
+    logic kb_br_valid, kb_valid;
+    logic kb_br_error;
+    logic [7:0] kb_br_scancode, kb_scancode;
+
+    ps2_rx kb (
+        .clk_in(clk_50mhz),
+        .rst_in(sys_rst),
+        .ps2_clk_in(pmodb[2]),
+        .ps2_data_in(pmodb[0]),
+        .valid_out(kb_br_valid),
+        .error_out(kb_br_error),
+        .scancode_out(kb_br_scancode)
+    );
+
+    ps2_rx_bridge br (
+        .clk_in(clk_50mhz),
+        .rst_in(sys_rst),
+        .scancode_in(kb_br_scancode),
+        .valid_in(kb_br_valid),
+        .error_in(kb_br_error),
+        .scancode_out(kb_scancode),
+        .valid_out(kb_valid)
+    );
+
+    keyboard_ram kb_ram (
+        .clk_in(clk_50mhz),
+        .rst_in(sys_rst),
+
+        .kb_scancode_in(kb_scancode),
+        .kb_valid_in(kb_valid),
+
+        .cpu_addr_in(keyboard_addr_in),
+        .cpu_write_enable_in(keyboard_write_enable_in),
+        .cpu_data_out(keyboard_data_out)
     );
 
     uart_rx #(.CLOCKS_PER_BAUD(17)) urx (

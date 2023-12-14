@@ -52,6 +52,7 @@ module aes_key_schedule (
       4'd8: rcon = 8'h80;
       4'd9: rcon = 8'h1b;
       4'd10: rcon = 8'h36;
+      default: rcon = 8'h0;
     endcase
   end
 

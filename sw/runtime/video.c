@@ -108,7 +108,7 @@ videoscrollup(int lines)
     VIDEO.buf[i].character = '\x00';
     VIDEO.buf[i].color = VIDEO.color;
 
-    nanosleep(20000000);
+    // nanosleep(20000000);
 }
 
 static void
@@ -140,6 +140,14 @@ videoputc(char c)
 
     if (c == '\n') {
         videonextline();
+    } else if (c == '\b') {
+        videoputchar('\x00', VIDEO.color, VIDEO.row, VIDEO.col);
+        if (VIDEO.col != 0) {
+            VIDEO.col -= 1;
+        } else {
+            VIDEO.col = 159;
+            VIDEO.row = VIDEO.row == 0 ? 0 : (VIDEO.row - 1);
+        }
     } else {
         videoputchar(c, VIDEO.color, VIDEO.row, VIDEO.col);
         videonextpos();

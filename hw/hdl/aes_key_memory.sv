@@ -36,6 +36,7 @@ module aes_key_memory (
       4'd8: temp_key_rd_out = key_memory[8];
       4'd9: temp_key_rd_out = key_memory[9];
       4'd10: temp_key_rd_out = key_memory[10];
+      default: temp_key_rd_out = 128'h0;
     endcase
   end
 

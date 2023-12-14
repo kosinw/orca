@@ -61,58 +61,58 @@ module ps2_rx(
             state <= IDLE;
         end else begin
             case (state)
-            IDLE: begin
-                valid_out <= 1'b0;
-                error_out <= 1'b0;
-                // start bit present
-                if (ps2_clk_negedge && !ps2_data) begin
-                    counter <= 3'h0;
-                    scancode_int <= 8'h0;
-                    state <= RECEIVE;
-                end
-            end
-            RECEIVE: begin
-                if (ps2_clk_negedge) begin
-                    scancode_int[counter] <= ps2_data;
-                    counter <= counter + 1;
-                    if (counter === 3'd7) begin
-                        state <= PARITY;
+                IDLE: begin
+                    valid_out <= 1'b0;
+                    error_out <= 1'b0;
+                    // start bit present
+                    if (ps2_clk_negedge && !ps2_data) begin
+                        counter <= 3'h0;
+                        scancode_int <= 8'h0;
+                        state <= RECEIVE;
                     end
                 end
-            end
-            PARITY: begin
-                if (ps2_clk_negedge) begin
-                    // parity bit correct
-                    if ((^scancode_int) ^ ps2_data) begin
-                        state <= STOP;
+                RECEIVE: begin
+                    if (ps2_clk_negedge) begin
+                        scancode_int[counter] <= ps2_data;
+                        counter <= counter + 1;
+                        if (counter === 3'd7) begin
+                            state <= PARITY;
+                        end
                     end
+                end
+                PARITY: begin
+                    if (ps2_clk_negedge) begin
+                        // parity bit correct
+                        if ((^scancode_int) ^ ps2_data) begin
+                            state <= STOP;
+                        end
 
-                    // parity bit incorrect
-                    else begin
-                        valid_out <= 1'b0;
-                        error_out <= 1'b1;
-                        state <= IDLE;
+                        // parity bit incorrect
+                        else begin
+                            valid_out <= 1'b0;
+                            error_out <= 1'b1;
+                            state <= IDLE;
+                        end
                     end
                 end
-            end
-            STOP: begin
-                if (ps2_clk_negedge) begin
-                    // stop bit present
-                    if (ps2_data) begin
-                        scancode_out <= scancode_int;
-                        valid_out <= 1'b1;
-                        error_out <= 1'b0;
-                        state <= IDLE;
-                    end
-                    // stop bit not present
-                    else begin
-                        scancode_out <= 8'h0;
-                        valid_out <= 1'b0;
-                        error_out <= 1'b1;
-                        state <= IDLE;
+                STOP: begin
+                    if (ps2_clk_negedge) begin
+                        // stop bit present
+                        if (ps2_data) begin
+                            scancode_out <= scancode_int;
+                            valid_out <= 1'b1;
+                            error_out <= 1'b0;
+                            state <= IDLE;
+                        end
+                        // stop bit not present
+                        else begin
+                            scancode_out <= 8'h0;
+                            valid_out <= 1'b0;
+                            error_out <= 1'b1;
+                            state <= IDLE;
+                        end
                     end
                 end
-            end
             endcase
 
             ps2_last_clk <= ps2_clk;

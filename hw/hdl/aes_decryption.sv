@@ -24,6 +24,8 @@ module aes_decryption (
     output logic valid_out
 );
 
+  assign next_round_out = (decrypting && stage == `INV_SUB_BYTES);
+
   logic [3:0] round;
   logic [2:0] stage;
 
@@ -165,7 +167,7 @@ module aes_decryption (
   always_ff @(posedge clk_in) begin
     if (rst_in) begin
       stage <= `IDLE;
-      next_round_out <= 1'b0;
+      // next_round_out <= 1'b0;
     end else begin
       if (init_in) begin
         stage <= `ADD_ROUND_KEY;
@@ -179,7 +181,7 @@ module aes_decryption (
               case (stage)
                 `ADD_ROUND_KEY: begin
                   temp_data <= temp_data ^ key_in;
-                  next_round_out <= 1'b0;
+                  // next_round_out <= 1'b0;
                   if (round == `ROUND_INIT) begin
                     stage <= `INV_SHIFT_ROWS;
                   end else begin
@@ -206,7 +208,7 @@ module aes_decryption (
                 end
                 `INV_SUB_BYTES: begin
                   temp_data <= temp_subbytes_result;
-                  next_round_out <= 1'b1;
+                  // next_round_out <= 1'b1;
                   stage <= `ADD_ROUND_KEY;
                 end
               endcase
@@ -215,7 +217,7 @@ module aes_decryption (
               case (stage)
                 `ADD_ROUND_KEY: begin
                   temp_data <= temp_data ^ key_in;
-                  next_round_out <= 1'b0;
+                  // next_round_out <= 1'b0;
                   stage <= `IDLE;
                   valid_out <= 1'b1;
                   decrypting <= 1'b0;
