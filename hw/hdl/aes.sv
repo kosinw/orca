@@ -34,6 +34,8 @@ module aes(
 
   output logic [31:0] data_out,
   output logic aes_complete_out,
+
+  output logic [3:0] aes_processing_stage_out,
   output logic aes_ctrl_init_out
 );
 
@@ -88,6 +90,7 @@ module aes(
   assign mode_decrypt = aes_ctrl_in[1];
   assign aes_ctrl_init = (mode_encrypt || mode_decrypt) ? 1'b1 : 1'b0;
   assign aes_ctrl_init_out = aes_ctrl_init;
+  assign aes_processing_stage_out = aes_processing_stage;
 
   // get the aes mode
   always_comb begin

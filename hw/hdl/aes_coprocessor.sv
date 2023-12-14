@@ -29,6 +29,7 @@ module aes_coprocessor (
   assign cpu_data_aes_encrypt = cpu_data_in[0];
 
   // registers to make up MMIO_AES register
+  logic [3:0] aes_processing_stage;
   logic aes_processing, aes_valid_result, aes_decrypt, aes_encrypt;
 
   // register to check whether cpu_addr_in is in range
@@ -37,11 +38,11 @@ module aes_coprocessor (
   logic aes_ctrl_write_enable;
 
   // MMIO_AES control register
-  logic [3:0] MMIO_AES;
-  assign MMIO_AES = {aes_processing, aes_valid_result, aes_decrypt, aes_encrypt};
+  logic [7:0] MMIO_AES;
+  assign MMIO_AES = {aes_processing_stage, aes_processing, aes_valid_result, aes_decrypt, aes_encrypt};
 
   assign cpu_addr_in_range = (cpu_addr_in[19:16] == 4'h4);
-  assign cpu_addr_is_aes_ctrl_reg = (cpu_addr_in[19:0] == 20'h4_1000);
+  assign cpu_addr_is_aes_ctrl_reg = (cpu_addr_in[19:0] == 20'h4_F000);
   assign cpu_write_enable = (cpu_addr_in_range && !cpu_addr_is_aes_ctrl_reg) ? cpu_write_enable_in : 4'h0;
   assign aes_ctrl_write_enable = cpu_addr_is_aes_ctrl_reg && cpu_write_enable_in[0] ? 1'b1 : 1'b0;
 
@@ -103,6 +104,8 @@ module aes_coprocessor (
     .aes_mem_we_out(aes_write_enable),
 
     .aes_complete_out(aes_complete_out),
+
+    .aes_processing_stage_out(aes_processing_stage),
     .aes_ctrl_init_out(aes_processing)
   );
 

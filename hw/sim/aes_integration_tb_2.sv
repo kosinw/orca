@@ -47,7 +47,7 @@ module aes_integration_2_tb;
   task wait_complete;
     do_while = 1;
     while (do_while) begin
-      read_from_aes_mem(32'h0004_1000, 4'h0, 1'b0);
+      read_from_aes_mem(32'h0004_F000, 4'h0, 1'b0);
       $display("AES Control Reg: %0b", cpu_data_out);
       if (cpu_data_out[2]) begin
         do_while = 0;
@@ -99,7 +99,7 @@ module aes_integration_2_tb;
 
     $display("\n*** Writing to AES MMIO Control Register: Encryption ***\n");
 
-    write_to_aes_mem(32'h0004_1000, 32'b001, 4'hf);
+    write_to_aes_mem(32'h0004_F000, 32'b001, 4'hf);
     
     #20;
 
@@ -149,7 +149,7 @@ module aes_integration_2_tb;
 
     #100;
 
-    write_to_aes_mem(32'h0004_1000, 32'b010, 4'hf);
+    write_to_aes_mem(32'h0004_F000, 32'b010, 4'hf);
 
     #20;
 
