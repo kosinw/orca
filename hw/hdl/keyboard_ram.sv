@@ -32,8 +32,6 @@ module keyboard_ram (
   // keyboard write enable in - wired to kb_valid_in
   logic kb_we_in;
 
-  // addr to rd/wr to the kb_ram
-  logic [6:0] kb_mem_addr_in;
   // data output from kb_ram
   logic [7:0] kb_mem_data_out;
 
@@ -47,9 +45,6 @@ module keyboard_ram (
   assign cpu_addr_in_range = (cpu_addr_in[19:16] == 4'h3);
   assign cpu_addr_is_keyboard_ctrl_reg = (cpu_addr_in[19:0] == 20'h30080);
   assign cpu_write_enable = (cpu_addr_in_range) ? cpu_write_enable_in[0] : 1'b0;
-
-  // if cpu_addr_in_range AND not accessing control reg, then use cpu_addr_in addr. else use MMIO_KEYBOARD addr
-  assign kb_mem_addr_in = (cpu_addr_in_range && !cpu_addr_is_keyboard_ctrl_reg) ? cpu_addr_in[6:0] : keyboard_ctr;
 
   assign MMIO_KEYBOARD = {keyboard_ctr, keyboard_data_available};
 
@@ -86,22 +81,29 @@ module keyboard_ram (
     end
   end
 
-  xilinx_single_port_ram_read_first #(
+
+  xilinx_true_dual_port_read_first_2_clock_ram #(
     .RAM_WIDTH(8),
     .RAM_DEPTH(128),
     .RAM_PERFORMANCE("HIGH_PERFORMANCE")
   ) kb_ram (
     .clka(clk_in),
     .rsta(rst_in),
-
-    .addra(kb_mem_addr_in),
+    .addra(keyboard_ctr),
     .dina(kb_scancode_in),
-
     .wea(kb_we_in),
     .ena(1'b1),
-
     .regcea(1'b1),
-    .douta(kb_mem_data_out)
+    .douta(),
+
+    .clkb(clk_in),
+    .rstb(rst_in),
+    .addrb(cpu_addr_in[6:0]),
+    .dinb(),
+    .web(1'h0),
+    .enb(1'b1),
+    .regceb(1'b1),
+    .doutb(kb_mem_data_out)
   );
 
 endmodule
