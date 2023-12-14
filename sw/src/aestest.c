@@ -41,11 +41,16 @@ main(void)
                     uint32_t *aes_buffer_in = (uint32_t*)MMIO_AES_BUFFER_IN;
                     printf("\n");
                     uint32_t aligned_size = (aeslen + 15) & ~15;
-                    for (int i = 0; i < aligned_size + 16; i += 4) {
-                        printf("aesbuf[%d]: %p \n", i, aes_buffer_in[i / 4]);
-                    }
+
                     aesencrypt();
-                    while (!aespoll()) { nanosleep(10); }
+                    while (!aespoll()) {
+                        // videoclear();
+                        videomovecursor(0, 0);
+                        for (int i = 0; i < 100; i += 4) {
+                            printf("aesbuf[%d]: %p \n", i, (aes_buffer_in)[i / 4]);
+                        }
+                        nanosleep(100);
+                    }
                     aescopyout(aesout, &aeslenout);
                     aesack();
                 } else if (kbd[i] == CAPS_LOCK_KEY) {

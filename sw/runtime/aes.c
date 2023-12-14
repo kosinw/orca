@@ -59,28 +59,28 @@ aescopyout(uint8_t *buffer, uint32_t *size_out)
 void
 aesencrypt(void)
 {
-    uint32_t *aes_ctrl_reg = (uint32_t *)MMIO_AES_CTRL;
+    uint8_t *aes_ctrl_reg = (uint8_t *)MMIO_AES_CTRL;
     *aes_ctrl_reg = 0b001;
 }
 
 void
 aesdecrypt(void)
 {
-    uint32_t *aes_ctrl_reg = (uint32_t *)MMIO_AES_CTRL;
+    uint8_t *aes_ctrl_reg = (uint8_t *)MMIO_AES_CTRL;
     *aes_ctrl_reg = 0b010;
 }
 
 bool
 aespoll(void)
 {
-    uint32_t *aes_ctrl_reg = (uint32_t *)MMIO_AES_CTRL;
-    printf("%p\n", *aes_ctrl_reg);
+    uint8_t *aes_ctrl_reg = (uint8_t *)MMIO_AES_CTRL;
+    // printf("%p\n", *aes_ctrl_reg);
     return (*aes_ctrl_reg & 0b100) != 0;
 }
 
 void
 aesack(void)
 {
-    uint32_t *aes_ctrl_reg = (uint32_t *)MMIO_AES_CTRL;
+    uint8_t *aes_ctrl_reg = (uint8_t *)MMIO_AES_CTRL;
     *aes_ctrl_reg = 0b000;
 }
