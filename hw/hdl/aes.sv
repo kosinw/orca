@@ -184,12 +184,12 @@ module aes(
                 aes_mem_rd_stage <= `CYCLE_1;
               end
               `CYCLE_1: begin
-                aes_mem_rd_stage <= `CYCLE_2;
-                // aes_mem_rd_stage <= `READ_RESULT;
-              end
-              `CYCLE_2: begin
+                // aes_mem_rd_stage <= `CYCLE_2;
                 aes_mem_rd_stage <= `READ_RESULT;
               end
+              // `CYCLE_2: begin
+              //   aes_mem_rd_stage <= `READ_RESULT;
+              // end
               `READ_RESULT: begin
                 if (data_in == 32'hDEADBEEF) begin
                   aes_processing_stage <= `START_AES;
