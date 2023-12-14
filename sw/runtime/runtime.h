@@ -1,14 +1,18 @@
 #pragma once
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
 
 // mmio addresses
 
-#define MMIO_VIDEO_RAM      0x000020000
-#define MMIO_COUNTER        0x000010000
-#define MMIO_ENTROPY        0x000010004
+#define MMIO_VIDEO_RAM          0x20000
+#define MMIO_COUNTER            0x10000
+#define MMIO_ENTROPY            0x10004
+#define MMIO_KEYBOARD_CTRL      0x30080
+#define MMIO_KEYBOARD_BUF       0x30000
+#define MMIO_KEYBOARD_LEN       0x80
 
 // string.c - string manipulation
 int         memcmp(const void*, const void*, unsigned);
@@ -43,6 +47,14 @@ uint32_t    entropy(void);
 void        srand(void);
 uint32_t    xorshift32(void);
 
+// keyboard.c - keyboard
+uint8_t     keyboard_rdctrl(void);
+void        keyboard_wrctrl(void);
+uint8_t     keyboard_getc(uint32_t);
+
+#define KEYBOARD_CTRL_READY         0x01
+#define KEYBOARD_NUM_CHARS(x)        (x >> 1)
+
 // defines
 #define COLOR_BLACK             0b000
 #define COLOR_RED               0b001
@@ -69,7 +81,7 @@ uint32_t    xorshift32(void);
 #define FOREGROUND_LIME         FOREGROUND_LIGHT | COLOR_GREEN
 #define FOREGROUND_YELLOW       FOREGROUND_LIGHT | COLOR_YELLOW
 #define FOREGROUND_BLUE         FOREGROUND_LIGHT | COLOR_BLUE
-#define FOREGROUND_FUSCHIA      FOREGROUND_LIGHT | COLOR_FUSCHIA
+#define FOREGROUND_FUSCHIA      FOREGROUND_LIGHT | COLOR_FUCHSIA
 #define FOREGROUND_AQUA         FOREGROUND_LIGHT | COLOR_AQUA
 #define FOREGROUND_WHITE        FOREGROUND_LIGHT | COLOR_WHITE
 
