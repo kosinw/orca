@@ -3,20 +3,19 @@
 #define BOARD_WIDTH 160
 #define BOARD_HEIGHT 45
 
-#define MAX_INITIAL_CELLS 15
+#define MAX_INITIAL_CELLS 2400
 
 void
 initboard(bool *grid, int width, int height)
 {
     int cells_left = MAX_INITIAL_CELLS;
 
-    for (int r = 0; r < height; r++) {
-        bool seen_in_row = false;
+    srand();
 
+    for (int r = 0; r < height; r++) {
         for (int c = 0; c < width; c++) {
-            if (!seen_in_row && cells_left > 0 && (entropy() % 100) < 2) {
+            if (cells_left > 0 && (xorshift32() % 100) < 20) {
                 grid[width*r+c] = true;
-                seen_in_row = true;
                 cells_left--;
             } else {
                 grid[width*r+c] = false;
@@ -109,10 +108,10 @@ main(void)
         updateboard(GRID, BOARD_WIDTH, BOARD_HEIGHT);
 
         // Then draw the cells
-        // drawgrid(GRID, BOARD_WIDTH, BOARD_HEIGHT);
+        drawgrid(GRID, BOARD_WIDTH, BOARD_HEIGHT);
 
         // Then sleep for like 300 ms
-        nanosleep(300000000);
-        break;
+        nanosleep(50000000);
+        // break;
     }
 }
