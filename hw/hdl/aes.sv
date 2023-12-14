@@ -71,6 +71,13 @@ module aes(
   // counter to access the mem to read or write data
   logic [9:0] aes_mem_rd_ctr, aes_mem_wb_ctr;
 
+  logic [31:0] temp_aes_data_out_dword_1, temp_aes_data_out_dword_2, temp_aes_data_out_dword_3, temp_aes_data_out_dword_4;
+
+  assign temp_aes_data_out_dword_1 = temp_aes_data_out[127:96];
+  assign temp_aes_data_out_dword_2 = temp_aes_data_out[95:64];
+  assign temp_aes_data_out_dword_3 = temp_aes_data_out[63:32];
+  assign temp_aes_data_out_dword_4 = temp_aes_data_out[31:0];
+
   logic aes_valid_result;
   logic init_aes, aes_ctrl_init, mode_decrypt, mode_encrypt;
   logic mode;
@@ -92,6 +99,44 @@ module aes(
       default: begin
         mode = `ENCRYPT;
       end
+    endcase
+  end
+
+
+  // combination logic to handle aes_addr_out and aes_mem_we_out
+  // used to read/write for aes_core to access input buffer or write to output buffer after encryption/decryption
+  always_comb begin
+    case (aes_processing_stage)
+      `RD_DWORD_1, `RD_DWORD_2, `RD_DWORD_3, `RD_DWORD_4: begin
+        aes_addr_out = AES_INPUT_BASE_ADDR + aes_mem_rd_ctr;
+        aes_mem_we_out = 4'h0;
+      end
+      `WB_DWORD_1, `WB_DWORD_2, `WB_DWORD_3, `WB_DWORD_4: begin
+        aes_addr_out = AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
+        aes_mem_we_out = 4'hf;
+      end
+      default: begin
+        aes_addr_out = AES_INPUT_BASE_ADDR + aes_mem_rd_ctr;
+        aes_mem_we_out = 4'h0;
+      end
+    endcase
+  end
+
+  // combination logic to handle data_out
+  // used to write to output buffer
+  always_comb begin
+    case (aes_processing_stage)
+      `WB_DWORD_1, `WB_DWORD_2, `WB_DWORD_3, `WB_DWORD_4: begin 
+        if (aes_mem_wb_ctr == aes_mem_rd_ctr) begin
+          data_out = 32'hdeadbeef;
+        end else begin
+          if (aes_processing_stage == `WB_DWORD_1) data_out = temp_aes_data_out_dword_1;
+          if (aes_processing_stage == `WB_DWORD_2) data_out = temp_aes_data_out_dword_2;
+          if (aes_processing_stage == `WB_DWORD_3) data_out = temp_aes_data_out_dword_3;
+          if (aes_processing_stage == `WB_DWORD_4) data_out = temp_aes_data_out_dword_4;
+        end
+      end 
+      default: data_out = 32'h0;
     endcase
   end
 
@@ -122,24 +167,25 @@ module aes(
       aes_mem_rd_stage <= `IDLE;
 
       temp_aes_data_in <= 0;
-      aes_addr_out <= 0;
-      aes_mem_we_out <= 0;
+      // aes_addr_out <= 0;
+      // aes_mem_we_out <= 0;
 
       init_aes <= 0;
 
-      data_out <= 0;
+      // temp_data_out <= 0;
     end else begin
       if (aes_ctrl_init) begin
         case (aes_processing_stage)
           `RD_DWORD_1, `RD_DWORD_2, `RD_DWORD_3, `RD_DWORD_4: begin
-            aes_mem_we_out <= 4'h0;
+            // aes_mem_we_out <= 4'h0;
             case (aes_mem_rd_stage)
               `IDLE: begin
-                aes_addr_out <= AES_INPUT_BASE_ADDR + aes_mem_rd_ctr;
+                // aes_addr_out <= AES_INPUT_BASE_ADDR + aes_mem_rd_ctr;
                 aes_mem_rd_stage <= `CYCLE_1;
               end
               `CYCLE_1: begin
                 aes_mem_rd_stage <= `CYCLE_2;
+                // aes_mem_rd_stage <= `READ_RESULT;
               end
               `CYCLE_2: begin
                 aes_mem_rd_stage <= `READ_RESULT;
@@ -178,26 +224,26 @@ module aes(
             // once we have a valid result
             if (aes_valid_result) begin
               aes_processing_stage <= aes_processing_stage + 1;
-              aes_addr_out <= AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
+              // aes_addr_out <= AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
             end
           end
           `WB_DWORD_1, `WB_DWORD_2, `WB_DWORD_3, `WB_DWORD_4: begin
-            aes_mem_we_out <= 4'hf;
-            aes_addr_out <= AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
+            // aes_mem_we_out <= 4'hf;
+            // aes_addr_out <= AES_OUTPUT_BASE_ADDR + aes_mem_wb_ctr;
             if (aes_mem_wb_ctr == aes_mem_rd_ctr) begin
-              data_out <= 32'hDEADBEEF;
+              // temp_data_out <= 32'hDEADBEEF;
               aes_complete_out <= 1;
               aes_processing_stage <= `RD_DWORD_1;
             end else begin
-              if (aes_processing_stage == `WB_DWORD_1) begin
-                data_out <= temp_aes_data_out[127:96];
-              end else if (aes_processing_stage == `WB_DWORD_2) begin
-                data_out <= temp_aes_data_out[95:64];
-              end else if (aes_processing_stage == `WB_DWORD_3) begin
-                data_out <= temp_aes_data_out[63:32];
-              end else if (aes_processing_stage == `WB_DWORD_4) begin
-                data_out <= temp_aes_data_out[31:0];
-              end
+              // if (aes_processing_stage == `WB_DWORD_1) begin
+              //   temp_data_out <= temp_aes_data_out[127:96];
+              // end else if (aes_processing_stage == `WB_DWORD_2) begin
+              //   temp_data_out <= temp_aes_data_out[95:64];
+              // end else if (aes_processing_stage == `WB_DWORD_3) begin
+              //   temp_data_out <= temp_aes_data_out[63:32];
+              // end else if (aes_processing_stage == `WB_DWORD_4) begin
+              //   temp_data_out <= temp_aes_data_out[31:0];
+              // end
               aes_mem_wb_ctr <= aes_mem_wb_ctr + 1;
               if (aes_processing_stage == `WB_DWORD_4) begin
                 aes_processing_stage <= `RD_DWORD_1;
@@ -217,12 +263,12 @@ module aes(
         aes_mem_rd_stage <= `IDLE;
 
         temp_aes_data_in <= 0;
-        aes_addr_out <= 0;
-        aes_mem_we_out <= 0;
+        // aes_addr_out <= 0;
+        // aes_mem_we_out <= 0;
 
         init_aes <= 0;
 
-        data_out <= 0;
+        // temp_data_out <= 0;
       end
     end
   end
