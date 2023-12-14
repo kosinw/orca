@@ -51,6 +51,8 @@ uint32_t    xorshift32(void);
 uint8_t     keyboard_rdctrl(void);
 void        keyboard_wrctrl(void);
 uint8_t     keyboard_getc(uint32_t);
+bool        keyboardpoll(uint8_t*, uint32_t*);
+char        keyboarditoa(uint8_t);
 
 #define KEYBOARD_CTRL_READY         0x01
 #define KEYBOARD_NUM_CHARS(x)        (x >> 1)

@@ -4,7 +4,7 @@
 module ps2_rx_bridge (
     input wire clk_in,
     input wire rst_in,
-    input [7:0] scancode_in,
+    input wire [7:0] scancode_in,
     input wire valid_in,
     input wire error_in,
     output logic [7:0] scancode_out,
