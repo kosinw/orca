@@ -219,17 +219,28 @@ module top_level(
     // Keyboard Peripheral
 
     // registers to handle ps2_rx outputs
-    logic kb_valid;
-    logic [7:0] kb_scancode;
+    logic kb_br_valid, kb_valid;
+    logic kb_br_error;
+    logic [7:0] kb_br_scancode, kb_scancode;
 
     ps2_rx kb (
-        .clk_in(clk_100mhz),
+        .clk_in(clk_50mhz),
         .rst_in(sys_rst),
         .ps2_clk_in(pmodb[2]),
         .ps2_data_in(pmodb[0]),
-        .valid_out(kb_valid),
-        .error_out(),
-        .scancode_out(kb_scancode)
+        .valid_out(kb_br_valid),
+        .error_out(kb_br_error),
+        .scancode_out(kb_br_scancode)
+    );
+
+    ps2_rx_bridge br (
+        .clk_in(clk_50mhz),
+        .rst_in(sys_rst),
+        .scancode_in(kb_br_scancode),
+        .valid_in(kb_br_valid),
+        .error_in(kb_br_error),
+        .scancode_out(kb_scancode),
+        .valid_out(kb_valid)
     );
 
     keyboard_ram kb_ram (
