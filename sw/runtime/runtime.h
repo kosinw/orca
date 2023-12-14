@@ -54,6 +54,9 @@ uint8_t     keyboard_getc(uint32_t);
 bool        keyboardpoll(uint8_t*, uint32_t*);
 char        keyboarditoa(uint8_t);
 
+// aes.c - aes
+
+
 #define KEYBOARD_CTRL_READY         0x01
 #define KEYBOARD_NUM_CHARS(x)        (x >> 1)
 
